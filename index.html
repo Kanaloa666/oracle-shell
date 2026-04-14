@@ -3,58 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <title>ORACLE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body {
-  margin:0;
-  overflow:hidden;
-  background:black;
-  color:white;
-  font-family: monospace;
-}
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    color: white;
+    font-family: monospace;
+  }
 
-canvas {
-  position:absolute;
-  top:0;
-  left:0;
-}
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
 
-#ui {
-  position:absolute;
-  bottom:40px;
-  width:100%;
-  text-align:center;
-}
+  #title {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    opacity: 0.7;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
 
-#status {
-  opacity:.7;
-  font-size:14px;
-  letter-spacing:2px;
-}
+  #ui {
+    position: absolute;
+    left: 50%;
+    bottom: 34px;
+    transform: translateX(-50%);
+    width: min(760px, 92vw);
+    text-align: center;
+    z-index: 5;
+  }
 
-#response {
-  margin-top:10px;
-  font-size:18px;
-}
+  #panel {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 16px 18px 18px;
+    backdrop-filter: blur(8px);
+  }
 
-#title {
-  position:absolute;
-  top:20px;
-  left:20px;
-  opacity:.6;
-  font-size:12px;
-}
+  #status {
+    opacity: 0.8;
+    font-size: 13px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
 
-/* colors */
-.idle {color:#00aaff;}
-.listening {color:#66c2ff;}
-.thinking {color:#ffd500;}
-.executing {color:#00ff88;}
-.alert {color:#ff0040;}
-.speaking {color:#ffffff;}
-.deep {color:#a86dff;}
+  #heardLabel,
+  #responseLabel {
+    font-size: 11px;
+    opacity: 0.55;
+    letter-spacing: 2px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+  }
+
+  #heard {
+    min-height: 22px;
+    font-size: 15px;
+    opacity: 0.9;
+  }
+
+  #response {
+    min-height: 26px;
+    margin-top: 2px;
+    font-size: 18px;
+  }
+
+  #controls {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    background: rgba(255,255,255,0.08);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-family: monospace;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  button:hover {
+    background: rgba(255,255,255,0.14);
+  }
+
+  #hint {
+    margin-top: 12px;
+    font-size: 11px;
+    opacity: 0.5;
+    letter-spacing: 1px;
+  }
+
+  .idle { color: #00aaff; }
+  .listening { color: #66c2ff; }
+  .thinking { color: #ffd500; }
+  .executing { color: #00ff88; }
+  .alert { color: #ff0040; }
+  .speaking { color: #ffffff; }
+  .deep { color: #a86dff; }
 </style>
 </head>
-
 <body class="idle">
 
 <canvas id="canvas"></canvas>
@@ -62,188 +120,338 @@ canvas {
 <div id="title">ORACLE // ACTIVE</div>
 
 <div id="ui">
-  <div id="status">IDLE</div>
-  <div id="response">Press SPACE to speak</div>
+  <div id="panel">
+    <div id="status">IDLE</div>
+
+    <div id="heardLabel">TRANSCRIPT</div>
+    <div id="heard">Awaiting input.</div>
+
+    <div id="responseLabel">RESPONSE</div>
+    <div id="response">Press LISTEN or hit SPACE.</div>
+
+    <div id="controls">
+      <button id="listenBtn">LISTEN</button>
+      <button id="idleBtn">RESET</button>
+    </div>
+
+    <div id="hint">
+      SPACE = listen · built-in browser speech only works best in Chrome/Edge
+    </div>
+  </div>
 </div>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let W = canvas.width = innerWidth;
-let H = canvas.height = innerHeight;
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
 
 let state = "idle";
+let lastTranscript = "";
+
+const statusEl = document.getElementById("status");
+const heardEl = document.getElementById("heard");
+const responseEl = document.getElementById("response");
+const listenBtn = document.getElementById("listenBtn");
+const idleBtn = document.getElementById("idleBtn");
 
 const colors = {
-  idle:"#00aaff",
-  listening:"#66c2ff",
-  thinking:"#ffd500",
-  executing:"#00ff88",
-  alert:"#ff0040",
-  speaking:"#ffffff",
-  deep:"#a86dff"
+  idle: "#00aaff",
+  listening: "#66c2ff",
+  thinking: "#ffd500",
+  executing: "#00ff88",
+  alert: "#ff0040",
+  speaking: "#ffffff",
+  deep: "#a86dff"
 };
 
 const glyphs = "01アカサタナハマヤラABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const fontSize = 14;
-const columns = Math.floor(W / fontSize);
-const rain = Array(columns).fill(0);
+let columns = Math.floor(W / fontSize);
+let rain = Array(columns).fill(0);
 
 let particles = [];
-for(let i=0;i<500;i++){
+for (let i = 0; i < 500; i++) {
   particles.push({
-    x:Math.random()*W,
-    y:Math.random()*H,
-    vx:0,
-    vy:0
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: 0,
+    vy: 0
   });
 }
 
-function setState(s,text){
-  state = s;
-  document.body.className = s;
-  document.getElementById("status").innerText = s.toUpperCase();
-  if(text) document.getElementById("response").innerText = text;
+function setState(newState, responseText = null, heardText = null) {
+  state = newState;
+  document.body.className = newState;
+  statusEl.innerText = newState.toUpperCase();
+
+  if (heardText !== null) {
+    heardEl.innerText = heardText || "Awaiting input.";
+  }
+
+  if (responseText !== null) {
+    responseEl.innerText = responseText;
+  }
 }
 
-/* SPEECH OUTPUT */
-function speak(text){
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.95;
-  utterance.pitch = 1;
-  speechSynthesis.speak(utterance);
+  utterance.rate = 0.96;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+  window.speechSynthesis.speak(utterance);
 }
 
-/* MATRIX */
-function drawRain(){
-  ctx.fillStyle="rgba(0,0,0,0.08)";
-  ctx.fillRect(0,0,W,H);
+function resetToIdle() {
+  setState("idle", "Press LISTEN or hit SPACE.", lastTranscript || "Awaiting input.");
+}
 
-  ctx.fillStyle=colors[state];
-  ctx.font=fontSize+"px monospace";
+function drawRain() {
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillRect(0, 0, W, H);
 
-  for(let i=0;i<rain.length;i++){
-    let x=i*fontSize;
-    let y=rain[i]*fontSize;
-    let char=glyphs[Math.floor(Math.random()*glyphs.length)];
+  ctx.fillStyle = colors[state];
+  ctx.font = fontSize + "px monospace";
 
-    ctx.fillText(char,x,y);
+  for (let i = 0; i < rain.length; i++) {
+    const x = i * fontSize;
+    const y = rain[i] * fontSize;
+    const char = glyphs[Math.floor(Math.random() * glyphs.length)];
 
-    if(y>H && Math.random()>0.98) rain[i]=0;
+    ctx.fillText(char, x, y);
+
+    if (y > H && Math.random() > 0.98) rain[i] = 0;
     rain[i]++;
   }
 }
 
-/* AVATAR */
-function silhouette(x,y){
-  let cx=W/2;
-  let cy=H/2;
+function silhouette(x, y) {
+  const cx = W / 2;
+  const cy = H / 2;
 
-  let nx=(x-cx)/200;
-  let ny=(y-cy)/200;
+  const nx = (x - cx) / 200;
+  const ny = (y - cy) / 200;
 
-  let head=1-(nx*nx+(ny+.3)*(ny+.3)*2);
-  let shoulders=1-((nx*nx)/1.5+(ny-.3)*(ny-.3)*4);
+  const head = 1 - (nx * nx + (ny + 0.3) * (ny + 0.3) * 2);
+  const shoulders = 1 - ((nx * nx) / 1.5 + (ny - 0.3) * (ny - 0.3) * 4);
 
-  return Math.max(head,shoulders,0);
+  return Math.max(head, shoulders, 0);
 }
 
-function updateParticles(){
-  let cx=W/2;
-  let cy=H/2;
+function updateParticles() {
+  const cx = W / 2;
+  const cy = H / 2;
 
-  particles.forEach(p=>{
-    let dx=cx-p.x;
-    let dy=cy-p.y;
-    let dist=Math.sqrt(dx*dx+dy*dy)||1;
+  particles.forEach(p => {
+    const dx = cx - p.x;
+    const dy = cy - p.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    let attract=0.002;
-    if(state==="executing") attract=0.006;
-    if(state==="thinking") attract=0.003;
-    if(state==="idle") attract=0.0005;
+    let attract = 0.002;
+    if (state === "executing") attract = 0.006;
+    if (state === "thinking") attract = 0.003;
+    if (state === "idle") attract = 0.0005;
+    if (state === "deep") attract = 0.004;
 
-    p.vx+=dx/dist*attract;
-    p.vy+=dy/dist*attract;
+    p.vx += dx / dist * attract;
+    p.vy += dy / dist * attract;
 
-    let s=silhouette(p.x,p.y);
+    const s = silhouette(p.x, p.y);
 
-    if(s>0){
-      p.vy-=s*0.05;
+    if (s > 0) {
+      p.vy -= s * 0.05;
     }
 
-    p.vx*=.95;
-    p.vy*=.95;
+    if (state === "alert") {
+      p.vx += (Math.random() - 0.5) * 0.35;
+      p.vy += (Math.random() - 0.5) * 0.35;
+    }
 
-    p.x+=p.vx;
-    p.y+=p.vy;
+    if (state === "deep") {
+      p.vx += Math.sin(p.y * 0.01) * 0.02;
+    }
+
+    p.vx *= 0.95;
+    p.vy *= 0.95;
+
+    p.x += p.vx;
+    p.y += p.vy;
 
     ctx.beginPath();
-    ctx.fillStyle=colors[state];
-    ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
+    ctx.fillStyle = colors[state];
+    ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
     ctx.fill();
   });
 }
 
-function draw(){
+function draw() {
   drawRain();
   updateParticles();
   requestAnimationFrame(draw);
 }
-draw();
 
-/* BRAIN */
-function respond(text){
-  text=text.toLowerCase();
-
-  if(text.includes("hello")) return "I'm here.";
-  if(text.includes("help")) return "Tell me what you need.";
-  if(text.includes("plan")) return "Start with the highest leverage move.";
-  if(text.includes("focus")) return "Remove distractions and commit.";
-  
-  return "Say that again.";
+function getTimeReply() {
+  const now = new Date();
+  return "Current time is " + now.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  }) + ".";
 }
 
-/* VOICE INPUT */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function interpret(text) {
+  const t = text.toLowerCase().trim();
 
-if(SpeechRecognition){
-  const recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.lang = "en-US";
-
-  function listen(){
-    setState("listening","Listening...");
-    recognition.start();
+  if (t.includes("hello") || t.includes("hey oracle") || t.includes("hi oracle")) {
+    return { mood: "speaking", reply: "I'm here." };
   }
 
-  recognition.onresult = function(e){
-    let text = e.results[0][0].transcript;
+  if (t.includes("help")) {
+    return { mood: "speaking", reply: "Tell me what you need. I can listen, reflect, and guide the next step." };
+  }
 
-    setState("thinking",text);
+  if (t.includes("plan")) {
+    return { mood: "thinking", reply: "Start with the highest-leverage move, then remove friction around it." };
+  }
 
-    setTimeout(()=>{
-      let reply = respond(text);
-      setState("speaking",reply);
-      speak(reply); // 🔥 THIS IS NEW
-    },800);
-  };
+  if (t.includes("focus")) {
+    return { mood: "deep", reply: "Narrow the field. One priority. One direction. No drift." };
+  }
 
-  recognition.onerror = function(){
-    setState("alert","Voice error");
-  };
+  if (t.includes("status")) {
+    return { mood: "speaking", reply: "Systems nominal. Presence stable. Awaiting directive." };
+  }
 
-  document.addEventListener("keydown",e=>{
-    if(e.code==="Space"){
-      listen();
-    }
-  });
+  if (t.includes("calm down") || t.includes("relax")) {
+    return { mood: "idle", reply: "Understood. Returning to a calmer state." };
+  }
+
+  if (t.includes("think")) {
+    return { mood: "thinking", reply: "Processing. Give me the clearest version of the problem." };
+  }
+
+  if (t.includes("deep mode") || t.includes("go deep")) {
+    return { mood: "deep", reply: "Deeper layer engaged." };
+  }
+
+  if (t.includes("time")) {
+    return { mood: "speaking", reply: getTimeReply() };
+  }
+
+  if (t.includes("execute") || t.includes("do it")) {
+    return { mood: "executing", reply: "Directive accepted." };
+  }
+
+  return { mood: "speaking", reply: "I heard you. Give me a clearer directive and I will refine the response." };
 }
 
-window.addEventListener("resize",()=>{
-  W=canvas.width=innerWidth;
-  H=canvas.height=innerHeight;
+function deliverReply(result, transcript) {
+  setState(result.mood, result.reply, transcript);
+  speak(result.reply);
+
+  setTimeout(() => {
+    if (state !== "listening") {
+      setState("idle", "Press LISTEN or hit SPACE.", transcript);
+    }
+  }, 4000);
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isListening = false;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  recognition.onstart = function() {
+    isListening = true;
+    setState("listening", "Listening...", "Listening...");
+  };
+
+  recognition.onresult = function(e) {
+    let interim = "";
+    let finalText = "";
+
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const chunk = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        finalText += chunk;
+      } else {
+        interim += chunk;
+      }
+    }
+
+    if (interim) {
+      heardEl.innerText = interim;
+    }
+
+    if (finalText) {
+      lastTranscript = finalText;
+      setState("thinking", "Analyzing.", finalText);
+
+      setTimeout(() => {
+        const result = interpret(finalText);
+        deliverReply(result, finalText);
+      }, 700);
+    }
+  };
+
+  recognition.onerror = function(e) {
+    isListening = false;
+    setState("alert", "Voice error: " + e.error, lastTranscript || "Awaiting input.");
+  };
+
+  recognition.onend = function() {
+    isListening = false;
+  };
+} else {
+  setState("alert", "Speech recognition not supported in this browser.", "Use Chrome or Edge.");
+}
+
+function startListening() {
+  if (!recognition) return;
+
+  try {
+    window.speechSynthesis.cancel();
+    recognition.start();
+  } catch (err) {
+    setState("alert", "Microphone busy or unavailable.", lastTranscript || "Awaiting input.");
+  }
+}
+
+listenBtn.addEventListener("click", startListening);
+idleBtn.addEventListener("click", resetToIdle);
+
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    startListening();
+  }
 });
+
+window.addEventListener("resize", () => {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  columns = Math.floor(W / fontSize);
+  rain = Array(columns).fill(0);
+});
+
+draw();
+
+/* future backend hook */
+window.oracleUpdate = function(data = {}) {
+  const mood = data.mood || "idle";
+  const response = data.response || "Awaiting directive.";
+  const transcript = data.transcript || lastTranscript || "Awaiting input.";
+  lastTranscript = transcript;
+  setState(mood, response, transcript);
+  if (data.speak) speak(response);
+};
 </script>
 
 </body>
