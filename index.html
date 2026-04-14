@@ -1,458 +1,916 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>ORACLE</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body {
-    margin: 0;
-    overflow: hidden;
-    background: black;
-    color: white;
-    font-family: monospace;
-  }
+  <meta charset="UTF-8" />
+  <title>ORACLE // PRESENCE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --oracle: #00ff88;
+      --oracle-rgb: 0, 255, 136;
+      --bg: #000000;
+      --panel: rgba(255,255,255,0.05);
+      --panel-border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.95);
+      --muted: rgba(255,255,255,0.55);
+    }
 
-  canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
+    * {
+      box-sizing: border-box;
+    }
 
-  #title {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    opacity: 0.7;
-    font-size: 12px;
-    letter-spacing: 2px;
-  }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: monospace;
+    }
 
-  #ui {
-    position: absolute;
-    left: 50%;
-    bottom: 34px;
-    transform: translateX(-50%);
-    width: min(760px, 92vw);
-    text-align: center;
-    z-index: 5;
-  }
+    body {
+      position: relative;
+    }
 
-  #panel {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    padding: 16px 18px 18px;
-    backdrop-filter: blur(8px);
-  }
+    canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+    }
 
-  #status {
-    opacity: 0.8;
-    font-size: 13px;
-    letter-spacing: 2px;
-    margin-bottom: 10px;
-  }
+    #bgCanvas {
+      z-index: 1;
+    }
 
-  #heardLabel,
-  #responseLabel {
-    font-size: 11px;
-    opacity: 0.55;
-    letter-spacing: 2px;
-    margin-top: 10px;
-    margin-bottom: 6px;
-  }
+    .vignette,
+    .scanlines,
+    .noise {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
 
-  #heard {
-    min-height: 22px;
-    font-size: 15px;
-    opacity: 0.9;
-  }
+    .vignette {
+      z-index: 4;
+      background:
+        radial-gradient(circle at center,
+          rgba(0,0,0,0.00) 28%,
+          rgba(0,0,0,0.18) 60%,
+          rgba(0,0,0,0.50) 100%);
+    }
 
-  #response {
-    min-height: 26px;
-    margin-top: 2px;
-    font-size: 18px;
-  }
+    .scanlines {
+      z-index: 5;
+      opacity: 0.08;
+      background-image: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.045) 1px,
+        transparent 1px
+      );
+      background-size: 100% 4px;
+      mix-blend-mode: screen;
+    }
 
-  #controls {
-    margin-top: 14px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+    .noise {
+      z-index: 5;
+      opacity: 0.03;
+      background-image: radial-gradient(rgba(255,255,255,0.75) 0.6px, transparent 0.7px);
+      background-size: 8px 8px;
+      mix-blend-mode: screen;
+      filter: blur(0.3px);
+    }
 
-  button {
-    background: rgba(255,255,255,0.08);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 999px;
-    padding: 10px 16px;
-    font-family: monospace;
-    cursor: pointer;
-    letter-spacing: 1px;
-  }
+    #avatarWrap {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
 
-  button:hover {
-    background: rgba(255,255,255,0.14);
-  }
+    #avatarGlow {
+      position: absolute;
+      width: min(48vw, 620px);
+      height: min(70vh, 860px);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center,
+          rgba(var(--oracle-rgb), 0.22) 0%,
+          rgba(var(--oracle-rgb), 0.11) 22%,
+          rgba(var(--oracle-rgb), 0.03) 48%,
+          rgba(var(--oracle-rgb), 0) 72%);
+      filter: blur(32px);
+      opacity: 0.8;
+      animation: oracleFloat 6.5s ease-in-out infinite;
+    }
 
-  #hint {
-    margin-top: 12px;
-    font-size: 11px;
-    opacity: 0.5;
-    letter-spacing: 1px;
-  }
+    #avatarFrame {
+      position: relative;
+      width: min(34vw, 420px);
+      height: min(72vh, 820px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: oracleFloat 6.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 14px rgba(var(--oracle-rgb), 0.24))
+              drop-shadow(0 0 30px rgba(var(--oracle-rgb), 0.12));
+    }
 
-  .idle { color: #00aaff; }
-  .listening { color: #66c2ff; }
-  .thinking { color: #ffd500; }
-  .executing { color: #00ff88; }
-  .alert { color: #ff0040; }
-  .speaking { color: #ffffff; }
-  .deep { color: #a86dff; }
-</style>
+    #avatarImg {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      mix-blend-mode: screen;
+      filter:
+        saturate(1.05)
+        brightness(1.02)
+        contrast(1.08)
+        drop-shadow(0 0 12px rgba(var(--oracle-rgb), 0.18));
+      transition: opacity 450ms ease;
+    }
+
+    #avatarFallback {
+      width: 100%;
+      height: 100%;
+      opacity: 0.82;
+      display: none;
+    }
+
+    #avatarMask {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.00) 0%,
+          rgba(255,255,255,0.12) 12%,
+          rgba(255,255,255,0.02) 28%,
+          rgba(255,255,255,0.12) 46%,
+          rgba(255,255,255,0.03) 68%,
+          rgba(255,255,255,0.00) 100%
+        );
+      mix-blend-mode: screen;
+      opacity: 0.18;
+      animation: scanSweep 4.5s linear infinite;
+    }
+
+    #avatarShimmer {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          105deg,
+          rgba(255,255,255,0) 0%,
+          rgba(255,255,255,0.05) 35%,
+          rgba(255,255,255,0.18) 50%,
+          rgba(255,255,255,0.05) 65%,
+          rgba(255,255,255,0) 100%
+        );
+      transform: translateX(-120%);
+      mix-blend-mode: screen;
+      opacity: 0.22;
+      animation: shimmerPass 7s linear infinite;
+    }
+
+    #avatarReticle {
+      position: absolute;
+      width: min(42vw, 500px);
+      height: min(42vw, 500px);
+      border-radius: 50%;
+      border: 1px solid rgba(var(--oracle-rgb), 0.12);
+      box-shadow:
+        inset 0 0 20px rgba(var(--oracle-rgb), 0.05),
+        0 0 25px rgba(var(--oracle-rgb), 0.06);
+      opacity: 0.7;
+      animation: slowSpin 18s linear infinite;
+    }
+
+    #avatarReticle::before,
+    #avatarReticle::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      inset: 16px;
+      border: 1px dashed rgba(var(--oracle-rgb), 0.10);
+    }
+
+    #avatarReticle::after {
+      inset: 42px;
+      border-style: solid;
+      opacity: 0.42;
+    }
+
+    #topbar {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      right: 20px;
+      z-index: 8;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 12px;
+    }
+
+    #brandTitle {
+      color: rgba(255,255,255,0.92);
+      margin-bottom: 6px;
+    }
+
+    #brandSub {
+      font-size: 10px;
+      opacity: 0.74;
+    }
+
+    #systemBlock {
+      text-align: right;
+      line-height: 1.5;
+    }
+
+    #clock {
+      color: rgba(255,255,255,0.92);
+    }
+
+    #ui {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      width: min(820px, 94vw);
+      z-index: 9;
+    }
+
+    #panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 16px 18px 18px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow:
+        0 0 40px rgba(0,0,0,0.32),
+        inset 0 0 22px rgba(var(--oracle-rgb), 0.03);
+    }
+
+    #statusRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #statusPill {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--oracle-rgb), 0.28);
+      color: rgb(var(--oracle-rgb));
+      box-shadow: inset 0 0 18px rgba(var(--oracle-rgb), 0.06);
+    }
+
+    .label {
+      font-size: 11px;
+      opacity: 0.6;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    #heard,
+    #response {
+      min-height: 24px;
+      line-height: 1.55;
+    }
+
+    #heard {
+      font-size: 15px;
+      color: rgba(255,255,255,0.84);
+      margin-bottom: 14px;
+    }
+
+    #response {
+      font-size: 18px;
+      color: rgba(255,255,255,0.98);
+    }
+
+    #response::before {
+      content: "> ";
+      color: rgb(var(--oracle-rgb));
+    }
+
+    #controls {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(255,255,255,0.08);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-family: monospace;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.14);
+    }
+
+    #hint {
+      margin-top: 12px;
+      font-size: 11px;
+      opacity: 0.52;
+      text-align: center;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1.7;
+    }
+
+    body.idle {
+      --oracle: #00aaff;
+      --oracle-rgb: 0, 170, 255;
+    }
+
+    body.listening {
+      --oracle: #66c2ff;
+      --oracle-rgb: 102, 194, 255;
+    }
+
+    body.thinking {
+      --oracle: #ffd500;
+      --oracle-rgb: 255, 213, 0;
+    }
+
+    body.executing {
+      --oracle: #00ff88;
+      --oracle-rgb: 0, 255, 136;
+    }
+
+    body.alert {
+      --oracle: #ff335f;
+      --oracle-rgb: 255, 51, 95;
+    }
+
+    body.speaking {
+      --oracle: #ffffff;
+      --oracle-rgb: 255, 255, 255;
+    }
+
+    body.deep {
+      --oracle: #a86dff;
+      --oracle-rgb: 168, 109, 255;
+    }
+
+    body.listening #avatarFrame,
+    body.speaking #avatarFrame {
+      animation: oracleFloat 6.5s ease-in-out infinite, oracleBreathe 1.8s ease-in-out infinite;
+    }
+
+    body.executing #avatarFrame {
+      animation: oracleFloat 6.5s ease-in-out infinite, oraclePulse 1.15s ease-in-out infinite;
+    }
+
+    body.executing #avatarImg,
+    body.executing #avatarFallback {
+      filter:
+        saturate(1.15)
+        brightness(1.06)
+        contrast(1.12)
+        drop-shadow(0 0 16px rgba(var(--oracle-rgb), 0.28))
+        drop-shadow(0 0 40px rgba(var(--oracle-rgb), 0.14));
+    }
+
+    body.alert #avatarFrame {
+      animation: oracleFloat 6.5s ease-in-out infinite, oracleGlitch 180ms steps(2, end) infinite;
+    }
+
+    body.thinking #avatarReticle,
+    body.deep #avatarReticle {
+      animation: slowSpin 10s linear infinite;
+    }
+
+    body.speaking #avatarShimmer {
+      animation: shimmerPass 2.6s linear infinite;
+      opacity: 0.34;
+    }
+
+    body.alert #avatarShimmer {
+      opacity: 0.12;
+    }
+
+    @keyframes oracleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes oracleBreathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes oraclePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.035); }
+    }
+
+    @keyframes oracleGlitch {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-2px, 1px); }
+      50% { transform: translate(2px, -1px); }
+      75% { transform: translate(-1px, -2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes scanSweep {
+      0% { transform: translateY(-105%); }
+      100% { transform: translateY(105%); }
+    }
+
+    @keyframes shimmerPass {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(120%); }
+    }
+
+    @media (max-width: 900px) {
+      #avatarFrame {
+        width: min(50vw, 340px);
+        height: min(60vh, 650px);
+      }
+
+      #avatarReticle {
+        width: min(64vw, 420px);
+        height: min(64vw, 420px);
+      }
+
+      #avatarGlow {
+        width: min(72vw, 520px);
+        height: min(66vh, 700px);
+      }
+
+      #response {
+        font-size: 16px;
+      }
+    }
+  </style>
 </head>
 <body class="idle">
 
-<canvas id="canvas"></canvas>
+  <canvas id="bgCanvas"></canvas>
 
-<div id="title">ORACLE // ACTIVE</div>
+  <div id="avatarWrap">
+    <div id="avatarGlow"></div>
+    <div id="avatarReticle"></div>
 
-<div id="ui">
-  <div id="panel">
-    <div id="status">IDLE</div>
-
-    <div id="heardLabel">TRANSCRIPT</div>
-    <div id="heard">Awaiting input.</div>
-
-    <div id="responseLabel">RESPONSE</div>
-    <div id="response">Press LISTEN or hit SPACE.</div>
-
-    <div id="controls">
-      <button id="listenBtn">LISTEN</button>
-      <button id="idleBtn">RESET</button>
-    </div>
-
-    <div id="hint">
-      SPACE = listen · built-in browser speech only works best in Chrome/Edge
+    <div id="avatarFrame">
+      <img id="avatarImg" src="oracle-avatar.png" alt="Oracle avatar" />
+      <svg id="avatarFallback" viewBox="0 0 300 700" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="fallbackGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.85)" />
+            <stop offset="100%" stop-color="rgba(255,255,255,0.15)" />
+          </linearGradient>
+        </defs>
+        <path d="M150 55
+                 C 110 55, 88 92, 88 132
+                 C 88 166, 104 192, 120 208
+                 C 84 222, 54 258, 46 316
+                 C 38 372, 48 456, 72 526
+                 C 92 586, 116 634, 150 672
+                 C 184 634, 208 586, 228 526
+                 C 252 456, 262 372, 254 316
+                 C 246 258, 216 222, 180 208
+                 C 196 192, 212 166, 212 132
+                 C 212 92, 190 55, 150 55 Z"
+              fill="none"
+              stroke="rgb(255,255,255)"
+              stroke-opacity="0.75"
+              stroke-width="2.5"/>
+        <ellipse cx="150" cy="130" rx="54" ry="68"
+                 fill="none"
+                 stroke="rgb(255,255,255)"
+                 stroke-opacity="0.7"
+                 stroke-width="2.2"/>
+        <path d="M88 240 C 112 214, 188 214, 212 240"
+              fill="none"
+              stroke="rgb(255,255,255)"
+              stroke-opacity="0.72"
+              stroke-width="2.2"/>
+        <path d="M106 276 C 118 256, 182 256, 194 276"
+              fill="none"
+              stroke="rgb(255,255,255)"
+              stroke-opacity="0.55"
+              stroke-width="1.8"/>
+        <path d="M112 340 C 120 402, 126 520, 150 622"
+              fill="none"
+              stroke="rgb(255,255,255)"
+              stroke-opacity="0.55"
+              stroke-width="1.8"/>
+        <path d="M188 340 C 180 402, 174 520, 150 622"
+              fill="none"
+              stroke="rgb(255,255,255)"
+              stroke-opacity="0.55"
+              stroke-width="1.8"/>
+        <circle cx="132" cy="126" r="4.5" fill="white" fill-opacity="0.9"/>
+        <circle cx="168" cy="126" r="4.5" fill="white" fill-opacity="0.9"/>
+      </svg>
+      <div id="avatarMask"></div>
+      <div id="avatarShimmer"></div>
     </div>
   </div>
-</div>
 
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+  <div class="noise"></div>
 
-let W = canvas.width = window.innerWidth;
-let H = canvas.height = window.innerHeight;
+  <div id="topbar">
+    <div>
+      <div id="brandTitle">ORACLE // ACTIVE</div>
+      <div id="brandSub">Matrix-hologram presence shell</div>
+    </div>
+    <div id="systemBlock">
+      <div id="clock">--:--:--</div>
+      <div id="modeText">Mode: calm</div>
+    </div>
+  </div>
 
-let state = "idle";
-let lastTranscript = "";
+  <div id="ui">
+    <div id="panel">
+      <div id="statusRow">
+        <div>Oracle Console</div>
+        <div id="statusPill">IDLE</div>
+      </div>
 
-const statusEl = document.getElementById("status");
-const heardEl = document.getElementById("heard");
-const responseEl = document.getElementById("response");
-const listenBtn = document.getElementById("listenBtn");
-const idleBtn = document.getElementById("idleBtn");
+      <div class="label">Transcript</div>
+      <div id="heard">Awaiting input.</div>
 
-const colors = {
-  idle: "#00aaff",
-  listening: "#66c2ff",
-  thinking: "#ffd500",
-  executing: "#00ff88",
-  alert: "#ff0040",
-  speaking: "#ffffff",
-  deep: "#a86dff"
-};
+      <div class="label">Response</div>
+      <div id="response">Press LISTEN or hit SPACE.</div>
 
-const glyphs = "01アカサタナハマヤラABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const fontSize = 14;
-let columns = Math.floor(W / fontSize);
-let rain = Array(columns).fill(0);
+      <div id="controls">
+        <button id="listenBtn">LISTEN</button>
+        <button id="resetBtn">RESET</button>
+      </div>
 
-let particles = [];
-for (let i = 0; i < 500; i++) {
-  particles.push({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    vx: 0,
-    vy: 0
-  });
-}
+      <div id="hint">
+        space = listen · upload oracle-avatar.png beside this file for the full hologram look
+      </div>
+    </div>
+  </div>
 
-function setState(newState, responseText = null, heardText = null) {
-  state = newState;
-  document.body.className = newState;
-  statusEl.innerText = newState.toUpperCase();
+  <script>
+    const body = document.body;
+    const canvas = document.getElementById("bgCanvas");
+    const ctx = canvas.getContext("2d");
 
-  if (heardText !== null) {
-    heardEl.innerText = heardText || "Awaiting input.";
-  }
+    const clockEl = document.getElementById("clock");
+    const modeText = document.getElementById("modeText");
+    const statusPill = document.getElementById("statusPill");
+    const heardEl = document.getElementById("heard");
+    const responseEl = document.getElementById("response");
+    const listenBtn = document.getElementById("listenBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const avatarImg = document.getElementById("avatarImg");
+    const avatarFallback = document.getElementById("avatarFallback");
 
-  if (responseText !== null) {
-    responseEl.innerText = responseText;
-  }
-}
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    let frame = 0;
+    let currentMood = "idle";
+    let lastTranscript = "";
 
-function speak(text) {
-  if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.96;
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
-  window.speechSynthesis.speak(utterance);
-}
+    const glyphs = "01アカサタナハマヤラABCDEFGHIJKLMNOPQRSTUVWXYZ<>[]{}#%";
+    const fontSize = 16;
+    let columns = Math.floor(W / fontSize);
+    let rain = Array(columns).fill(0);
 
-function resetToIdle() {
-  setState("idle", "Press LISTEN or hit SPACE.", lastTranscript || "Awaiting input.");
-}
+    const moods = {
+      idle: "Mode: calm",
+      listening: "Mode: attentive",
+      thinking: "Mode: analysis",
+      executing: "Mode: aligned",
+      alert: "Mode: warning",
+      speaking: "Mode: voice",
+      deep: "Mode: deep focus"
+    };
 
-function drawRain() {
-  ctx.fillStyle = "rgba(0,0,0,0.08)";
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.fillStyle = colors[state];
-  ctx.font = fontSize + "px monospace";
-
-  for (let i = 0; i < rain.length; i++) {
-    const x = i * fontSize;
-    const y = rain[i] * fontSize;
-    const char = glyphs[Math.floor(Math.random() * glyphs.length)];
-
-    ctx.fillText(char, x, y);
-
-    if (y > H && Math.random() > 0.98) rain[i] = 0;
-    rain[i]++;
-  }
-}
-
-function silhouette(x, y) {
-  const cx = W / 2;
-  const cy = H / 2;
-
-  const nx = (x - cx) / 200;
-  const ny = (y - cy) / 200;
-
-  const head = 1 - (nx * nx + (ny + 0.3) * (ny + 0.3) * 2);
-  const shoulders = 1 - ((nx * nx) / 1.5 + (ny - 0.3) * (ny - 0.3) * 4);
-
-  return Math.max(head, shoulders, 0);
-}
-
-function updateParticles() {
-  const cx = W / 2;
-  const cy = H / 2;
-
-  particles.forEach(p => {
-    const dx = cx - p.x;
-    const dy = cy - p.y;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-
-    let attract = 0.002;
-    if (state === "executing") attract = 0.006;
-    if (state === "thinking") attract = 0.003;
-    if (state === "idle") attract = 0.0005;
-    if (state === "deep") attract = 0.004;
-
-    p.vx += dx / dist * attract;
-    p.vy += dy / dist * attract;
-
-    const s = silhouette(p.x, p.y);
-
-    if (s > 0) {
-      p.vy -= s * 0.05;
+    function setMood(mood) {
+      currentMood = mood;
+      body.className = mood;
+      statusPill.textContent = mood.toUpperCase();
+      modeText.textContent = moods[mood] || "Mode: calm";
     }
 
-    if (state === "alert") {
-      p.vx += (Math.random() - 0.5) * 0.35;
-      p.vy += (Math.random() - 0.5) * 0.35;
+    function setOracleState(mood, responseText = null, heardText = null) {
+      setMood(mood);
+      if (heardText !== null) heardEl.textContent = heardText || "Awaiting input.";
+      if (responseText !== null) responseEl.textContent = responseText;
     }
 
-    if (state === "deep") {
-      p.vx += Math.sin(p.y * 0.01) * 0.02;
+    function speak(text) {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.96;
+      u.pitch = 1.0;
+      u.volume = 1.0;
+      window.speechSynthesis.speak(u);
     }
 
-    p.vx *= 0.95;
-    p.vy *= 0.95;
+    function drawRain() {
+      const colorMap = {
+        idle: "0,170,255",
+        listening: "102,194,255",
+        thinking: "255,213,0",
+        executing: "0,255,136",
+        alert: "255,51,95",
+        speaking: "255,255,255",
+        deep: "168,109,255"
+      };
 
-    p.x += p.vx;
-    p.y += p.vy;
+      const rgb = colorMap[currentMood] || "0,255,136";
 
-    ctx.beginPath();
-    ctx.fillStyle = colors[state];
-    ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-  });
-}
+      ctx.fillStyle = "rgba(0,0,0,0.08)";
+      ctx.fillRect(0, 0, W, H);
 
-function draw() {
-  drawRain();
-  updateParticles();
-  requestAnimationFrame(draw);
-}
+      const centerX = W / 2;
+      const centerY = H / 2;
+      const influence = currentMood === "executing" ? 290 :
+                        currentMood === "deep" ? 260 :
+                        currentMood === "thinking" ? 240 :
+                        currentMood === "speaking" ? 235 :
+                        currentMood === "listening" ? 215 : 185;
 
-function getTimeReply() {
-  const now = new Date();
-  return "Current time is " + now.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit"
-  }) + ".";
-}
+      ctx.font = fontSize + "px monospace";
 
-function interpret(text) {
-  const t = text.toLowerCase().trim();
+      for (let i = 0; i < rain.length; i++) {
+        const x = i * fontSize;
+        let y = rain[i] * fontSize;
+        const char = glyphs[Math.floor(Math.random() * glyphs.length)];
 
-  if (t.includes("hello") || t.includes("hey oracle") || t.includes("hi oracle")) {
-    return { mood: "speaking", reply: "I'm here." };
-  }
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-  if (t.includes("help")) {
-    return { mood: "speaking", reply: "Tell me what you need. I can listen, reflect, and guide the next step." };
-  }
+        let alpha = 0.22;
+        let speed = 1;
 
-  if (t.includes("plan")) {
-    return { mood: "thinking", reply: "Start with the highest-leverage move, then remove friction around it." };
-  }
+        if (dist < influence) {
+          const pull = 1 - dist / influence;
+          alpha += pull * 0.34;
+          speed -= pull * 0.35;
 
-  if (t.includes("focus")) {
-    return { mood: "deep", reply: "Narrow the field. One priority. One direction. No drift." };
-  }
+          if (currentMood === "thinking" || currentMood === "deep") {
+            y -= Math.sin((frame + i * 8) * 0.03) * 7 * pull;
+          }
 
-  if (t.includes("status")) {
-    return { mood: "speaking", reply: "Systems nominal. Presence stable. Awaiting directive." };
-  }
+          if (currentMood === "speaking") {
+            y -= Math.sin((frame + i * 4) * 0.09) * 6 * pull;
+          }
 
-  if (t.includes("calm down") || t.includes("relax")) {
-    return { mood: "idle", reply: "Understood. Returning to a calmer state." };
-  }
+          if (currentMood === "executing") {
+            y -= 10 * pull;
+            alpha += 0.08 * Math.sin(frame * 0.12);
+          }
 
-  if (t.includes("think")) {
-    return { mood: "thinking", reply: "Processing. Give me the clearest version of the problem." };
-  }
+          if (currentMood === "alert") {
+            y += Math.sin((frame + i * 10) * 0.16) * 4 * pull;
+          }
+        }
 
-  if (t.includes("deep mode") || t.includes("go deep")) {
-    return { mood: "deep", reply: "Deeper layer engaged." };
-  }
+        ctx.fillStyle = `rgba(${rgb}, ${Math.max(0.06, Math.min(alpha, 1))})`;
+        ctx.fillText(char, x, y);
 
-  if (t.includes("time")) {
-    return { mood: "speaking", reply: getTimeReply() };
-  }
+        rain[i] += speed;
 
-  if (t.includes("execute") || t.includes("do it")) {
-    return { mood: "executing", reply: "Directive accepted." };
-  }
-
-  return { mood: "speaking", reply: "I heard you. Give me a clearer directive and I will refine the response." };
-}
-
-function deliverReply(result, transcript) {
-  setState(result.mood, result.reply, transcript);
-  speak(result.reply);
-
-  setTimeout(() => {
-    if (state !== "listening") {
-      setState("idle", "Press LISTEN or hit SPACE.", transcript);
-    }
-  }, 4000);
-}
-
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-let isListening = false;
-
-if (SpeechRecognition) {
-  recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.lang = "en-US";
-
-  recognition.onstart = function() {
-    isListening = true;
-    setState("listening", "Listening...", "Listening...");
-  };
-
-  recognition.onresult = function(e) {
-    let interim = "";
-    let finalText = "";
-
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const chunk = e.results[i][0].transcript;
-      if (e.results[i].isFinal) {
-        finalText += chunk;
-      } else {
-        interim += chunk;
+        const resetChance = currentMood === "executing" ? 0.965 : 0.98;
+        if (rain[i] * fontSize > H && Math.random() > resetChance) {
+          rain[i] = Math.random() * -20;
+        }
       }
     }
 
-    if (interim) {
-      heardEl.innerText = interim;
+    function drawCenterGlow() {
+      const rgbMap = {
+        idle: "0,170,255",
+        listening: "102,194,255",
+        thinking: "255,213,0",
+        executing: "0,255,136",
+        alert: "255,51,95",
+        speaking: "255,255,255",
+        deep: "168,109,255"
+      };
+
+      const rgb = rgbMap[currentMood] || "0,255,136";
+      const centerX = W / 2;
+      const centerY = H / 2;
+      const radius = Math.min(W, H) * 0.16;
+
+      const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.8);
+      grad.addColorStop(0, `rgba(${rgb}, 0.14)`);
+      grad.addColorStop(0.35, `rgba(${rgb}, 0.06)`);
+      grad.addColorStop(1, `rgba(${rgb}, 0)`);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 1.8, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    if (finalText) {
-      lastTranscript = finalText;
-      setState("thinking", "Analyzing.", finalText);
+    function animate() {
+      frame++;
+      drawRain();
+      drawCenterGlow();
+      requestAnimationFrame(animate);
+    }
+
+    function resetToIdle() {
+      setOracleState("idle", "Press LISTEN or hit SPACE.", lastTranscript || "Awaiting input.");
+    }
+
+    function getTimeReply() {
+      const now = new Date();
+      return "Current time is " + now.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      }) + ".";
+    }
+
+    function interpret(text) {
+      const t = text.toLowerCase().trim();
+
+      if (t.includes("hello") || t.includes("hey oracle") || t.includes("hi")) {
+        return { mood: "speaking", reply: "I'm here." };
+      }
+
+      if (t.includes("help")) {
+        return { mood: "speaking", reply: "Tell me what you need. I can listen, reflect, and guide the next step." };
+      }
+
+      if (t.includes("plan")) {
+        return { mood: "thinking", reply: "Start with the highest-leverage move, then remove friction around it." };
+      }
+
+      if (t.includes("focus")) {
+        return { mood: "deep", reply: "Narrow the field. One priority. One direction. No drift." };
+      }
+
+      if (t.includes("status")) {
+        return { mood: "speaking", reply: "Systems nominal. Presence stable. Awaiting directive." };
+      }
+
+      if (t.includes("time")) {
+        return { mood: "speaking", reply: getTimeReply() };
+      }
+
+      if (t.includes("execute") || t.includes("do it")) {
+        return { mood: "executing", reply: "Directive accepted." };
+      }
+
+      if (t.includes("deep mode") || t.includes("go deep")) {
+        return { mood: "deep", reply: "Deeper layer engaged." };
+      }
+
+      if (t.includes("calm down") || t.includes("relax")) {
+        return { mood: "idle", reply: "Understood. Returning to a calmer state." };
+      }
+
+      return { mood: "speaking", reply: "I heard you. Give me a clearer directive and I will refine the response." };
+    }
+
+    function deliverReply(result, transcript) {
+      setOracleState(result.mood, result.reply, transcript);
+      speak(result.reply);
 
       setTimeout(() => {
-        const result = interpret(finalText);
-        deliverReply(result, finalText);
-      }, 700);
+        if (currentMood !== "listening") {
+          setOracleState("idle", "Press LISTEN or hit SPACE.", transcript);
+        }
+      }, 4000);
     }
-  };
 
-  recognition.onerror = function(e) {
-    isListening = false;
-    setState("alert", "Voice error: " + e.error, lastTranscript || "Awaiting input.");
-  };
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
 
-  recognition.onend = function() {
-    isListening = false;
-  };
-} else {
-  setState("alert", "Speech recognition not supported in this browser.", "Use Chrome or Edge.");
-}
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
 
-function startListening() {
-  if (!recognition) return;
+      recognition.onstart = function() {
+        setOracleState("listening", "Listening...", "Listening...");
+      };
 
-  try {
-    window.speechSynthesis.cancel();
-    recognition.start();
-  } catch (err) {
-    setState("alert", "Microphone busy or unavailable.", lastTranscript || "Awaiting input.");
-  }
-}
+      recognition.onresult = function(e) {
+        let interim = "";
+        let finalText = "";
 
-listenBtn.addEventListener("click", startListening);
-idleBtn.addEventListener("click", resetToIdle);
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const chunk = e.results[i][0].transcript;
+          if (e.results[i].isFinal) finalText += chunk;
+          else interim += chunk;
+        }
 
-document.addEventListener("keydown", e => {
-  if (e.code === "Space") {
-    e.preventDefault();
-    startListening();
-  }
-});
+        if (interim) heardEl.textContent = interim;
 
-window.addEventListener("resize", () => {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-  columns = Math.floor(W / fontSize);
-  rain = Array(columns).fill(0);
-});
+        if (finalText) {
+          lastTranscript = finalText;
+          setOracleState("thinking", "Analyzing.", finalText);
 
-draw();
+          setTimeout(() => {
+            const result = interpret(finalText);
+            deliverReply(result, finalText);
+          }, 700);
+        }
+      };
 
-/* future backend hook */
-window.oracleUpdate = function(data = {}) {
-  const mood = data.mood || "idle";
-  const response = data.response || "Awaiting directive.";
-  const transcript = data.transcript || lastTranscript || "Awaiting input.";
-  lastTranscript = transcript;
-  setState(mood, response, transcript);
-  if (data.speak) speak(response);
-};
-</script>
+      recognition.onerror = function(e) {
+        setOracleState("alert", "Voice error: " + e.error, lastTranscript || "Awaiting input.");
+      };
+    } else {
+      setOracleState("alert", "Speech recognition not supported.", "Use Chrome or Edge.");
+    }
 
+    function startListening() {
+      if (!recognition) return;
+      try {
+        window.speechSynthesis.cancel();
+        recognition.start();
+      } catch (err) {
+        setOracleState("alert", "Microphone busy or unavailable.", lastTranscript || "Awaiting input.");
+      }
+    }
+
+    listenBtn.addEventListener("click", startListening);
+    resetBtn.addEventListener("click", resetToIdle);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        startListening();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      columns = Math.floor(W / fontSize);
+      rain = Array(columns).fill(0);
+    });
+
+    function updateClock() {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
+
+    avatarImg.addEventListener("load", () => {
+      avatarImg.style.opacity = "0.92";
+      avatarFallback.style.display = "none";
+    });
+
+    avatarImg.addEventListener("error", () => {
+      avatarImg.style.display = "none";
+      avatarFallback.style.display = "block";
+    });
+
+    window.oracleUpdate = function(data = {}) {
+      const mood = data.mood || "idle";
+      const response = data.response || "Awaiting directive.";
+      const transcript = data.transcript || lastTranscript || "Awaiting input.";
+      lastTranscript = transcript;
+      setOracleState(mood, response, transcript);
+      if (data.speak) speak(response);
+    };
+
+    setMood("idle");
+    updateClock();
+    setInterval(updateClock, 1000);
+    animate();
+  </script>
 </body>
 </html>
