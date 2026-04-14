@@ -1,10 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>ORACLE // PRESENCE</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+<title>ORACLE</title>
 <style>
 body {
   margin:0;
@@ -14,7 +12,12 @@ body {
   font-family: monospace;
 }
 
-/* UI */
+canvas {
+  position:absolute;
+  top:0;
+  left:0;
+}
+
 #ui {
   position:absolute;
   bottom:40px;
@@ -23,14 +26,14 @@ body {
 }
 
 #status {
-  font-size:14px;
   opacity:.7;
+  font-size:14px;
   letter-spacing:2px;
 }
 
 #response {
-  margin-top:8px;
-  font-size:16px;
+  margin-top:10px;
+  font-size:18px;
 }
 
 #title {
@@ -41,7 +44,7 @@ body {
   font-size:12px;
 }
 
-/* mood colors */
+/* colors */
 .idle {color:#00aaff;}
 .listening {color:#66c2ff;}
 .thinking {color:#ffd500;}
@@ -49,12 +52,6 @@ body {
 .alert {color:#ff0040;}
 .speaking {color:#ffffff;}
 .deep {color:#a86dff;}
-
-canvas {
-  position:absolute;
-  top:0;
-  left:0;
-}
 </style>
 </head>
 
@@ -66,18 +63,15 @@ canvas {
 
 <div id="ui">
   <div id="status">IDLE</div>
-  <div id="response">Say the word.</div>
+  <div id="response">Press SPACE to speak</div>
 </div>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
-
-let W = canvas.width;
-let H = canvas.height;
+let W = canvas.width = innerWidth;
+let H = canvas.height = innerHeight;
 
 let state = "idle";
 
@@ -97,9 +91,7 @@ const columns = Math.floor(W / fontSize);
 const rain = Array(columns).fill(0);
 
 let particles = [];
-const particleCount = 600;
-
-for(let i=0;i<particleCount;i++){
+for(let i=0;i<500;i++){
   particles.push({
     x:Math.random()*W,
     y:Math.random()*H,
@@ -108,18 +100,24 @@ for(let i=0;i<particleCount;i++){
   });
 }
 
-function drawRain() {
-  ctx.fillStyle = "rgba(0,0,0,0.08)";
+function setState(s,text){
+  state = s;
+  document.body.className = s;
+  document.getElementById("status").innerText = s.toUpperCase();
+  if(text) document.getElementById("response").innerText = text;
+}
+
+function drawRain(){
+  ctx.fillStyle="rgba(0,0,0,0.08)";
   ctx.fillRect(0,0,W,H);
 
-  ctx.fillStyle = colors[state];
-  ctx.font = fontSize+"px monospace";
+  ctx.fillStyle=colors[state];
+  ctx.font=fontSize+"px monospace";
 
   for(let i=0;i<rain.length;i++){
-    let x = i*fontSize;
-    let y = rain[i]*fontSize;
-
-    let char = glyphs[Math.floor(Math.random()*glyphs.length)];
+    let x=i*fontSize;
+    let y=rain[i]*fontSize;
+    let char=glyphs[Math.floor(Math.random()*glyphs.length)];
 
     ctx.fillText(char,x,y);
 
@@ -129,64 +127,49 @@ function drawRain() {
 }
 
 function silhouette(x,y){
-  let cx = W/2;
-  let cy = H/2;
+  let cx=W/2;
+  let cy=H/2;
 
-  let nx = (x-cx)/200;
-  let ny = (y-cy)/200;
+  let nx=(x-cx)/200;
+  let ny=(y-cy)/200;
 
-  let head = 1 - (nx*nx + (ny+.3)*(ny+.3)*2);
-  let shoulders = 1 - ((nx*nx)/1.5 + (ny-.3)*(ny-.3)*4);
+  let head=1-(nx*nx+(ny+.3)*(ny+.3)*2);
+  let shoulders=1-((nx*nx)/1.5+(ny-.3)*(ny-.3)*4);
 
   return Math.max(head,shoulders,0);
 }
 
 function updateParticles(){
-  let cx = W/2;
-  let cy = H/2;
+  let cx=W/2;
+  let cy=H/2;
 
   particles.forEach(p=>{
-    let dx = cx - p.x;
-    let dy = cy - p.y;
+    let dx=cx-p.x;
+    let dy=cy-p.y;
+    let dist=Math.sqrt(dx*dx+dy*dy)||1;
 
-    let dist = Math.sqrt(dx*dx+dy*dy) || 1;
+    let attract=0.002;
+    if(state==="executing") attract=0.006;
+    if(state==="thinking") attract=0.003;
+    if(state==="idle") attract=0.0005;
 
-    let attract = 0.002;
+    p.vx+=dx/dist*attract;
+    p.vy+=dy/dist*attract;
 
-    if(state==="executing") attract = 0.006;
-    if(state==="thinking") attract = 0.003;
-    if(state==="idle") attract = 0.0005;
-
-    p.vx += dx/dist * attract;
-    p.vy += dy/dist * attract;
-
-    let s = silhouette(p.x,p.y);
+    let s=silhouette(p.x,p.y);
 
     if(s>0){
-      p.vx += (Math.random()-.5)*0.02;
-      p.vy -= s*0.05;
+      p.vy-=s*0.05;
     }
 
-    if(state==="executing"){
-      // anime hair flow
-      if(p.y < cy-40){
-        p.vx += Math.sin(p.y*.05)*0.2;
-      }
-    }
+    p.vx*=.95;
+    p.vy*=.95;
 
-    if(state==="alert"){
-      p.vx += (Math.random()-.5)*0.5;
-      p.vy += (Math.random()-.5)*0.5;
-    }
-
-    p.vx *= .95;
-    p.vy *= .95;
-
-    p.x += p.vx;
-    p.y += p.vy;
+    p.x+=p.vx;
+    p.y+=p.vy;
 
     ctx.beginPath();
-    ctx.fillStyle = colors[state];
+    ctx.fillStyle=colors[state];
     ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
     ctx.fill();
   });
@@ -197,42 +180,65 @@ function draw(){
   updateParticles();
   requestAnimationFrame(draw);
 }
-
 draw();
 
-/* UI */
+window.addEventListener("resize",()=>{
+  W=canvas.width=innerWidth;
+  H=canvas.height=innerHeight;
+});
 
-function setState(s, text){
-  state = s;
-  document.body.className = s;
-  document.getElementById("status").innerText = s.toUpperCase();
-  if(text) document.getElementById("response").innerText = text;
+/* -------------------------
+   🧠 SIMPLE "BRAIN"
+-------------------------*/
+
+function respond(text){
+  text=text.toLowerCase();
+
+  if(text.includes("hello")) return "I'm here.";
+  if(text.includes("help")) return "Tell me what you need.";
+  if(text.includes("plan")) return "Start with the highest leverage move.";
+  if(text.includes("what should i do")) return "Focus on the one thing that matters most.";
+  
+  return "Say that again.";
 }
 
-/* keyboard testing */
+/* -------------------------
+   🎤 VOICE INPUT
+-------------------------*/
 
-document.addEventListener("keydown", e=>{
-  if(e.key==="1") setState("idle","Say the word.");
-  if(e.key==="2") setState("listening","I am listening.");
-  if(e.key==="3") setState("thinking","Analyzing.");
-  if(e.key==="4") setState("executing","Directive accepted.");
-  if(e.key==="5") setState("alert","Something is wrong.");
-  if(e.key==="6") setState("speaking","Responding.");
-  if(e.key==="7") setState("deep","Entering deeper state.");
-});
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-/* backend hook */
+if(SpeechRecognition){
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.lang = "en-US";
 
-window.oracleUpdate = function(data){
-  setState(data.mood || "idle", data.response || "");
-};
+  function listen(){
+    setState("listening","Listening...");
+    recognition.start();
+  }
 
-window.addEventListener("resize",()=>{
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
-  W = canvas.width;
-  H = canvas.height;
-});
+  recognition.onresult = function(e){
+    let text = e.results[0][0].transcript;
+
+    setState("thinking",text);
+
+    setTimeout(()=>{
+      let reply = respond(text);
+      setState("speaking",reply);
+    },800);
+  };
+
+  recognition.onerror = function(){
+    setState("alert","Voice error");
+  };
+
+  document.addEventListener("keydown",e=>{
+    if(e.code==="Space"){
+      listen();
+    }
+  });
+}
 </script>
 
 </body>
