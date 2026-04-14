@@ -107,6 +107,15 @@ function setState(s,text){
   if(text) document.getElementById("response").innerText = text;
 }
 
+/* SPEECH OUTPUT */
+function speak(text){
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  speechSynthesis.speak(utterance);
+}
+
+/* MATRIX */
 function drawRain(){
   ctx.fillStyle="rgba(0,0,0,0.08)";
   ctx.fillRect(0,0,W,H);
@@ -126,6 +135,7 @@ function drawRain(){
   }
 }
 
+/* AVATAR */
 function silhouette(x,y){
   let cx=W/2;
   let cy=H/2;
@@ -182,30 +192,19 @@ function draw(){
 }
 draw();
 
-window.addEventListener("resize",()=>{
-  W=canvas.width=innerWidth;
-  H=canvas.height=innerHeight;
-});
-
-/* -------------------------
-   🧠 SIMPLE "BRAIN"
--------------------------*/
-
+/* BRAIN */
 function respond(text){
   text=text.toLowerCase();
 
   if(text.includes("hello")) return "I'm here.";
   if(text.includes("help")) return "Tell me what you need.";
   if(text.includes("plan")) return "Start with the highest leverage move.";
-  if(text.includes("what should i do")) return "Focus on the one thing that matters most.";
+  if(text.includes("focus")) return "Remove distractions and commit.";
   
   return "Say that again.";
 }
 
-/* -------------------------
-   🎤 VOICE INPUT
--------------------------*/
-
+/* VOICE INPUT */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(SpeechRecognition){
@@ -226,6 +225,7 @@ if(SpeechRecognition){
     setTimeout(()=>{
       let reply = respond(text);
       setState("speaking",reply);
+      speak(reply); // 🔥 THIS IS NEW
     },800);
   };
 
@@ -239,6 +239,11 @@ if(SpeechRecognition){
     }
   });
 }
+
+window.addEventListener("resize",()=>{
+  W=canvas.width=innerWidth;
+  H=canvas.height=innerHeight;
+});
 </script>
 
 </body>
