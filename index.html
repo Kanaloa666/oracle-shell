@@ -1,146 +1,727 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>ORACLE</title>
-<style>
-body{
-  margin:0;
-  overflow:hidden;
-  background:black;
-  color:white;
-  font-family:monospace;
-}
+  <meta charset="UTF-8" />
+  <title>ORACLE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root{
+      --oracle:#00ff88;
+      --oracle-rgb:0,255,136;
+    }
 
-/* MATRIX */
-canvas{
-  position:absolute;
-  top:0;
-  left:0;
-}
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#000;
+      color:#fff;
+      font-family:monospace;
+    }
 
-/* ORACLE VIDEO */
-#oracle{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:420px;
-  pointer-events:none;
-  mix-blend-mode:screen;
+    body{
+      position:relative;
+    }
 
-  animation: float 6s ease-in-out infinite;
-  filter:
-    drop-shadow(0 0 15px rgba(0,255,136,0.4))
-    drop-shadow(0 0 40px rgba(0,255,136,0.2));
-}
+    canvas{
+      position:absolute;
+      inset:0;
+      display:block;
+    }
 
-/* FLOATING */
-@keyframes float{
-  0%,100% { transform: translate(-50%,-50%) translateY(0px); }
-  50% { transform: translate(-50%,-50%) translateY(-18px); }
-}
+    #matrix{
+      z-index:1;
+    }
 
-/* UI */
-#ui{
-  position:absolute;
-  bottom:40px;
-  width:100%;
-  text-align:center;
-}
+    #fadeLayer{
+      position:absolute;
+      inset:0;
+      background:black;
+      z-index:6;
+      pointer-events:none;
+      opacity:1;
+      animation: pageFade 1.3s ease forwards;
+    }
 
-#status{
-  opacity:.7;
-  letter-spacing:2px;
-}
+    @keyframes pageFade{
+      from { opacity:1; }
+      to { opacity:0; }
+    }
 
-#response{
-  margin-top:10px;
-  font-size:18px;
-}
-</style>
+    #oracleGlow{
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:430px;
+      height:620px;
+      transform:translate(-50%,-50%);
+      z-index:2;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at center,
+          rgba(var(--oracle-rgb),0.22) 0%,
+          rgba(var(--oracle-rgb),0.10) 26%,
+          rgba(var(--oracle-rgb),0.03) 52%,
+          rgba(var(--oracle-rgb),0.00) 72%);
+      filter:blur(34px);
+      opacity:.82;
+      animation: glowFloat 6s ease-in-out infinite;
+    }
+
+    #reticle{
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:460px;
+      height:460px;
+      transform:translate(-50%,-50%);
+      z-index:2;
+      border-radius:50%;
+      border:1px solid rgba(var(--oracle-rgb),0.10);
+      box-shadow: inset 0 0 24px rgba(var(--oracle-rgb),0.04);
+      animation: spinSlow 18s linear infinite;
+      pointer-events:none;
+    }
+
+    #reticle::before,
+    #reticle::after{
+      content:"";
+      position:absolute;
+      inset:18px;
+      border-radius:50%;
+      border:1px dashed rgba(var(--oracle-rgb),0.08);
+    }
+
+    #reticle::after{
+      inset:42px;
+      border-style:solid;
+      opacity:.35;
+    }
+
+    #oracleWrap{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      z-index:4;
+      width:420px;
+      pointer-events:none;
+      opacity:0;
+      animation: oracleFadeIn 1.8s ease 0.15s forwards;
+    }
+
+    @keyframes oracleFadeIn{
+      from { opacity:0; }
+      to { opacity:0.96; }
+    }
+
+    #oracle{
+      width:100%;
+      display:block;
+      mix-blend-mode:screen;
+      filter:
+        drop-shadow(0 0 16px rgba(var(--oracle-rgb),0.40))
+        drop-shadow(0 0 42px rgba(var(--oracle-rgb),0.20));
+      animation: oracleFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes oracleFloat{
+      0%,100% { transform: translateY(0px); }
+      50% { transform: translateY(-18px); }
+    }
+
+    .speaking #oracle{
+      animation: oracleFloat 6s ease-in-out infinite, oraclePulse 1.5s ease-in-out infinite;
+    }
+
+    .thinking #oracleWrap{
+      animation: oracleFadeIn 1.8s ease 0.15s forwards, thinkDrift 4.4s ease-in-out infinite;
+    }
+
+    .deep #oracleWrap{
+      animation: oracleFadeIn 1.8s ease 0.15s forwards, deepDrift 5.8s ease-in-out infinite;
+    }
+
+    .alert #oracle{
+      animation: oracleFloat 6s ease-in-out infinite, alertGlitch .18s steps(2,end) infinite;
+    }
+
+    @keyframes oraclePulse{
+      0%,100% { filter: brightness(1) drop-shadow(0 0 16px rgba(var(--oracle-rgb),0.40)) drop-shadow(0 0 42px rgba(var(--oracle-rgb),0.20)); }
+      50% { filter: brightness(1.35) drop-shadow(0 0 22px rgba(var(--oracle-rgb),0.55)) drop-shadow(0 0 58px rgba(var(--oracle-rgb),0.28)); }
+    }
+
+    @keyframes thinkDrift{
+      0%,100% { transform:translate(-50%,-50%) translateX(0px); }
+      50% { transform:translate(-50%,-50%) translateX(-24px); }
+    }
+
+    @keyframes deepDrift{
+      0%,100% { transform:translate(-50%,-50%) translateX(0px) translateY(0px); }
+      50% { transform:translate(-50%,-50%) translateX(28px) translateY(-6px); }
+    }
+
+    @keyframes alertGlitch{
+      0% { transform: translateY(0px) translateX(0px); }
+      25% { transform: translateY(-1px) translateX(-2px); }
+      50% { transform: translateY(1px) translateX(2px); }
+      75% { transform: translateY(-2px) translateX(1px); }
+      100% { transform: translateY(0px) translateX(0px); }
+    }
+
+    @keyframes glowFloat{
+      0%,100% { transform:translate(-50%,-50%) translateY(0px); }
+      50% { transform:translate(-50%,-50%) translateY(-10px); }
+    }
+
+    @keyframes spinSlow{
+      from { transform:translate(-50%,-50%) rotate(0deg); }
+      to { transform:translate(-50%,-50%) rotate(360deg); }
+    }
+
+    #topbar{
+      position:absolute;
+      top:18px;
+      left:20px;
+      right:20px;
+      z-index:8;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      color:rgba(255,255,255,.58);
+      text-transform:uppercase;
+      letter-spacing:.15em;
+      font-size:12px;
+    }
+
+    #brandTitle{
+      color:rgba(255,255,255,.92);
+      margin-bottom:6px;
+    }
+
+    #brandSub{
+      font-size:10px;
+      opacity:.72;
+    }
+
+    #clock{
+      color:rgba(255,255,255,.9);
+      text-align:right;
+    }
+
+    #modeText{
+      text-align:right;
+      margin-top:4px;
+    }
+
+    #ui{
+      position:absolute;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%);
+      width:min(820px,94vw);
+      z-index:10;
+    }
+
+    #panel{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:16px 18px 18px;
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      box-shadow:0 0 40px rgba(0,0,0,.32);
+    }
+
+    #statusRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+      font-size:11px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,.58);
+    }
+
+    #statusPill{
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(var(--oracle-rgb),.28);
+      color:rgb(var(--oracle-rgb));
+      box-shadow:inset 0 0 18px rgba(var(--oracle-rgb),.06);
+    }
+
+    .label{
+      font-size:11px;
+      opacity:.58;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+
+    #heard{
+      min-height:24px;
+      line-height:1.55;
+      font-size:15px;
+      color:rgba(255,255,255,.84);
+      margin-bottom:14px;
+    }
+
+    #response{
+      min-height:24px;
+      line-height:1.55;
+      font-size:18px;
+      color:rgba(255,255,255,.98);
+    }
+
+    #response::before{
+      content:"> ";
+      color:rgb(var(--oracle-rgb));
+    }
+
+    #controls{
+      margin-top:14px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:999px;
+      padding:10px 16px;
+      font-family:monospace;
+      cursor:pointer;
+      letter-spacing:1px;
+    }
+
+    button:hover{
+      background:rgba(255,255,255,.14);
+    }
+
+    #hint{
+      margin-top:12px;
+      font-size:11px;
+      opacity:.52;
+      text-align:center;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      line-height:1.7;
+    }
+
+    .scanlines,
+    .vignette{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .scanlines{
+      z-index:6;
+      opacity:.08;
+      background-image:linear-gradient(to bottom, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size:100% 4px;
+      mix-blend-mode:screen;
+    }
+
+    .vignette{
+      z-index:7;
+      background:
+        radial-gradient(circle at center,
+          rgba(0,0,0,0) 30%,
+          rgba(0,0,0,.16) 60%,
+          rgba(0,0,0,.46) 100%);
+    }
+
+    body.idle{ --oracle:#00aaff; --oracle-rgb:0,170,255; }
+    body.listening{ --oracle:#66c2ff; --oracle-rgb:102,194,255; }
+    body.thinking{ --oracle:#ffd500; --oracle-rgb:255,213,0; }
+    body.executing{ --oracle:#00ff88; --oracle-rgb:0,255,136; }
+    body.alert{ --oracle:#ff335f; --oracle-rgb:255,51,95; }
+    body.speaking{ --oracle:#ffffff; --oracle-rgb:255,255,255; }
+    body.deep{ --oracle:#a86dff; --oracle-rgb:168,109,255; }
+
+    body.listening #oracleGlow,
+    body.speaking #oracleGlow{
+      animation: glowFloat 6s ease-in-out infinite, glowPulse 1.8s ease-in-out infinite;
+    }
+
+    body.executing #oracleGlow{
+      animation: glowFloat 6s ease-in-out infinite, glowPulse 1.1s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse{
+      0%,100% { opacity:.78; }
+      50% { opacity:1; }
+    }
+  </style>
 </head>
+<body class="idle">
 
-<body>
+  <canvas id="matrix"></canvas>
+  <div id="oracleGlow"></div>
+  <div id="reticle"></div>
 
-<canvas id="matrix"></canvas>
+  <div id="oracleWrap">
+    <video id="oracle" autoplay muted playsinline></video>
+  </div>
 
-<video id="oracle" autoplay muted playsinline></video>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div id="fadeLayer"></div>
 
-<div id="ui">
-  <div id="status">INITIALIZING</div>
-  <div id="response">Standby...</div>
-</div>
+  <div id="topbar">
+    <div>
+      <div id="brandTitle">ORACLE // ACTIVE</div>
+      <div id="brandSub">Intro + idle presence shell</div>
+    </div>
+    <div>
+      <div id="clock">--:--:--</div>
+      <div id="modeText">Mode: calm</div>
+    </div>
+  </div>
 
-<script>
-const video = document.getElementById("oracle");
-const status = document.getElementById("status");
-const response = document.getElementById("response");
+  <div id="ui">
+    <div id="panel">
+      <div id="statusRow">
+        <div>Oracle Console</div>
+        <div id="statusPill">INITIALIZING</div>
+      </div>
 
-/* VIDEO SYSTEM */
-const clips = {
-  intro: "oracle-intro.webm",
-  idle: "oracle-idle.webm"
-};
+      <div class="label">Transcript</div>
+      <div id="heard">Awaiting input.</div>
 
-let current = "intro";
+      <div class="label">Response</div>
+      <div id="response">Stand by...</div>
 
-/* PLAY CLIP */
-function playClip(name, loop=true){
-  video.src = clips[name];
-  video.loop = loop;
-  video.play();
-  current = name;
-}
+      <div id="controls">
+        <button id="listenBtn">LISTEN</button>
+        <button id="resetBtn">RESET</button>
+      </div>
 
-/* INTRO FIRST */
-playClip("intro", false);
+      <div id="hint">
+        press space or click listen · requires oracle-intro.webm and oracle-idle.webm
+      </div>
+    </div>
+  </div>
 
-video.onended = () => {
-  if(current === "intro"){
-    playClip("idle", true);
-    setState("idle","Oracle online.");
-  }
-};
+  <script>
+    const body = document.body;
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
 
-/* STATE SYSTEM */
-function setState(s, text){
-  status.innerText = s.toUpperCase();
-  if(text) response.innerText = text;
-}
+    const oracle = document.getElementById("oracle");
+    const clockEl = document.getElementById("clock");
+    const modeText = document.getElementById("modeText");
+    const statusPill = document.getElementById("statusPill");
+    const heardEl = document.getElementById("heard");
+    const responseEl = document.getElementById("response");
+    const listenBtn = document.getElementById("listenBtn");
+    const resetBtn = document.getElementById("resetBtn");
 
-/* MATRIX */
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    let currentMood = "idle";
+    let lastTranscript = "";
+    let introFinished = false;
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+    const clips = {
+      intro: "oracle-intro.webm",
+      idle: "oracle-idle.webm"
+    };
 
-let letters = "01";
-let fontSize = 14;
-let columns = canvas.width / fontSize;
-let drops = Array(Math.floor(columns)).fill(1);
+    const modes = {
+      idle: "Mode: calm",
+      listening: "Mode: attentive",
+      thinking: "Mode: analysis",
+      executing: "Mode: aligned",
+      alert: "Mode: warning",
+      speaking: "Mode: voice",
+      deep: "Mode: deep focus"
+    };
 
-function draw(){
-  ctx.fillStyle = "rgba(0,0,0,0.05)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+    function playClip(name, loop = true) {
+      if (!clips[name]) return;
+      oracle.src = clips[name];
+      oracle.loop = loop;
+      oracle.play().catch(() => {});
+    }
 
-  ctx.fillStyle = "#00ff88";
-  ctx.font = fontSize + "px monospace";
+    function setMood(mood) {
+      currentMood = mood;
+      body.className = mood;
+      statusPill.textContent = mood.toUpperCase();
+      modeText.textContent = modes[mood] || "Mode: calm";
+    }
 
-  for(let i=0;i<drops.length;i++){
-    let text = letters[Math.floor(Math.random()*letters.length)];
-    ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+    function setOracleState(mood, responseText = null, heardText = null) {
+      setMood(mood);
+      if (heardText !== null) heardEl.textContent = heardText || "Awaiting input.";
+      if (responseText !== null) responseEl.textContent = responseText;
+    }
 
-    if(drops[i]*fontSize > canvas.height && Math.random()>0.975)
-      drops[i]=0;
+    function speak(text) {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.96;
+      u.pitch = 1.0;
+      u.volume = 1.0;
+      window.speechSynthesis.speak(u);
+    }
 
-    drops[i]++;
-  }
-}
+    function updateClock() {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
 
-setInterval(draw,33);
-</script>
+    function getTimeReply() {
+      const now = new Date();
+      return "Current time is " + now.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      }) + ".";
+    }
 
+    function interpret(text) {
+      const t = text.toLowerCase().trim();
+
+      if (t.includes("hello") || t.includes("hey oracle") || t.includes("hi")) {
+        return { mood: "speaking", reply: "I'm here." };
+      }
+      if (t.includes("help")) {
+        return { mood: "speaking", reply: "Tell me what you need. I can listen, reflect, and guide the next step." };
+      }
+      if (t.includes("plan")) {
+        return { mood: "thinking", reply: "Start with the highest-leverage move, then remove friction around it." };
+      }
+      if (t.includes("focus")) {
+        return { mood: "deep", reply: "Narrow the field. One priority. One direction. No drift." };
+      }
+      if (t.includes("status")) {
+        return { mood: "speaking", reply: "Systems nominal. Presence stable. Awaiting directive." };
+      }
+      if (t.includes("time")) {
+        return { mood: "speaking", reply: getTimeReply() };
+      }
+      if (t.includes("execute") || t.includes("do it")) {
+        return { mood: "executing", reply: "Directive accepted." };
+      }
+      if (t.includes("deep mode") || t.includes("go deep")) {
+        return { mood: "deep", reply: "Deeper layer engaged." };
+      }
+      if (t.includes("calm down") || t.includes("relax")) {
+        return { mood: "idle", reply: "Understood. Returning to a calmer state." };
+      }
+
+      return { mood: "speaking", reply: "I heard you. Give me a clearer directive and I will refine the response." };
+    }
+
+    function deliverReply(result, transcript) {
+      setOracleState(result.mood, result.reply, transcript);
+      speak(result.reply);
+
+      setTimeout(() => {
+        if (currentMood !== "listening") {
+          setOracleState("idle", "Awaiting next command.", transcript);
+        }
+      }, 4200);
+    }
+
+    function resetToIdle() {
+      setOracleState("idle", "Awaiting next command.", lastTranscript || "Awaiting input.");
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onstart = function() {
+        setOracleState("listening", "Listening...", "Listening...");
+      };
+
+      recognition.onresult = function(e) {
+        let interim = "";
+        let finalText = "";
+
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const chunk = e.results[i][0].transcript;
+          if (e.results[i].isFinal) finalText += chunk;
+          else interim += chunk;
+        }
+
+        if (interim) heardEl.textContent = interim;
+
+        if (finalText) {
+          lastTranscript = finalText;
+          setOracleState("thinking", "Analyzing.", finalText);
+
+          setTimeout(() => {
+            const result = interpret(finalText);
+            deliverReply(result, finalText);
+          }, 700);
+        }
+      };
+
+      recognition.onerror = function(e) {
+        setOracleState("alert", "Voice error: " + e.error, lastTranscript || "Awaiting input.");
+      };
+    } else {
+      setOracleState("alert", "Speech recognition not supported.", "Use Chrome or Edge.");
+    }
+
+    function startListening() {
+      if (!recognition) return;
+      try {
+        window.speechSynthesis.cancel();
+        recognition.start();
+      } catch (err) {
+        setOracleState("alert", "Microphone busy or unavailable.", lastTranscript || "Awaiting input.");
+      }
+    }
+
+    listenBtn.addEventListener("click", startListening);
+    resetBtn.addEventListener("click", resetToIdle);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        startListening();
+      }
+    });
+
+    const glyphs = "01アカサタナハマヤラABCDEFGHIJKLMNOPQRSTUVWXYZ<>[]{}#%";
+    const fontSize = 16;
+    let columns = Math.floor(W / fontSize);
+    let rain = Array(columns).fill(0);
+    let frame = 0;
+
+    function drawMatrix() {
+      const rgbMap = {
+        idle: "0,170,255",
+        listening: "102,194,255",
+        thinking: "255,213,0",
+        executing: "0,255,136",
+        alert: "255,51,95",
+        speaking: "255,255,255",
+        deep: "168,109,255"
+      };
+
+      const rgb = rgbMap[currentMood] || "0,255,136";
+      ctx.fillStyle = "rgba(0,0,0,0.08)";
+      ctx.fillRect(0, 0, W, H);
+
+      const centerX = W / 2;
+      const centerY = H / 2;
+      const influence = currentMood === "executing" ? 290 :
+                        currentMood === "deep" ? 260 :
+                        currentMood === "thinking" ? 240 :
+                        currentMood === "speaking" ? 235 :
+                        currentMood === "listening" ? 215 : 185;
+
+      ctx.font = fontSize + "px monospace";
+
+      for (let i = 0; i < rain.length; i++) {
+        const x = i * fontSize;
+        let y = rain[i] * fontSize;
+        const char = glyphs[Math.floor(Math.random() * glyphs.length)];
+
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let alpha = 0.22;
+        let speed = 1;
+
+        if (dist < influence) {
+          const pull = 1 - dist / influence;
+          alpha += pull * 0.34;
+          speed -= pull * 0.35;
+
+          if (currentMood === "thinking" || currentMood === "deep") {
+            y -= Math.sin((frame + i * 8) * 0.03) * 7 * pull;
+          }
+
+          if (currentMood === "speaking") {
+            y -= Math.sin((frame + i * 4) * 0.09) * 6 * pull;
+          }
+
+          if (currentMood === "executing") {
+            y -= 10 * pull;
+            alpha += 0.08 * Math.sin(frame * 0.12);
+          }
+
+          if (currentMood === "alert") {
+            y += Math.sin((frame + i * 10) * 0.16) * 4 * pull;
+          }
+        }
+
+        ctx.fillStyle = `rgba(${rgb}, ${Math.max(0.06, Math.min(alpha, 1))})`;
+        ctx.fillText(char, x, y);
+
+        rain[i] += speed;
+        const resetChance = currentMood === "executing" ? 0.965 : 0.98;
+        if (rain[i] * fontSize > H && Math.random() > resetChance) {
+          rain[i] = Math.random() * -20;
+        }
+      }
+    }
+
+    function animate() {
+      frame++;
+      drawMatrix();
+      requestAnimationFrame(animate);
+    }
+
+    oracle.addEventListener("ended", () => {
+      if (!introFinished) {
+        introFinished = true;
+        playClip("idle", true);
+        setOracleState("idle", "Oracle online.", "Awaiting input.");
+      }
+    });
+
+    oracle.addEventListener("error", () => {
+      setOracleState("alert", "Video failed to load.", "Check intro and idle filenames.");
+    });
+
+    window.addEventListener("resize", () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      columns = Math.floor(W / fontSize);
+      rain = Array(columns).fill(0);
+    });
+
+    window.oracleUpdate = function(data = {}) {
+      const mood = data.mood || "idle";
+      const response = data.response || "Awaiting directive.";
+      const transcript = data.transcript || lastTranscript || "Awaiting input.";
+      lastTranscript = transcript;
+      setOracleState(mood, response, transcript);
+      if (data.speak) speak(response);
+    };
+
+    setOracleState("idle", "Stand by...", "Awaiting input.");
+    updateClock();
+    setInterval(updateClock, 1000);
+    animate();
+
+    playClip("intro", false);
+  </script>
 </body>
 </html>
