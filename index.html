@@ -41,16 +41,6 @@ canvas{
   50% { transform: translate(-50%,-50%) translateY(-18px); }
 }
 
-/* PULSE WHEN SPEAKING */
-.speaking #oracle{
-  animation: float 6s ease-in-out infinite, pulse 1.5s infinite;
-}
-
-@keyframes pulse{
-  0%,100%{ filter:brightness(1); }
-  50%{ filter:brightness(1.4); }
-}
-
 /* UI */
 #ui{
   position:absolute;
@@ -61,6 +51,7 @@ canvas{
 
 #status{
   opacity:.7;
+  letter-spacing:2px;
 }
 
 #response{
@@ -70,64 +61,55 @@ canvas{
 </style>
 </head>
 
-<body class="idle">
+<body>
 
 <canvas id="matrix"></canvas>
 
-<video id="oracle" autoplay muted loop playsinline>
-  <source src="oracle-idle.webm" type="video/webm">
-</video>
+<video id="oracle" autoplay muted playsinline></video>
 
 <div id="ui">
-  <div id="status">IDLE</div>
-  <div id="response">Press SPACE</div>
+  <div id="status">INITIALIZING</div>
+  <div id="response">Standby...</div>
 </div>
 
 <script>
-const body = document.body;
-const oracle = document.getElementById("oracle");
+const video = document.getElementById("oracle");
 const status = document.getElementById("status");
 const response = document.getElementById("response");
 
+/* VIDEO SYSTEM */
+const clips = {
+  intro: "oracle-intro.webm",
+  idle: "oracle-idle.webm"
+};
+
+let current = "intro";
+
+/* PLAY CLIP */
+function playClip(name, loop=true){
+  video.src = clips[name];
+  video.loop = loop;
+  video.play();
+  current = name;
+}
+
+/* INTRO FIRST */
+playClip("intro", false);
+
+video.onended = () => {
+  if(current === "intro"){
+    playClip("idle", true);
+    setState("idle","Oracle online.");
+  }
+};
+
 /* STATE SYSTEM */
-function setState(state, text){
-  body.className = state;
-  status.innerText = state.toUpperCase();
+function setState(s, text){
+  status.innerText = s.toUpperCase();
   if(text) response.innerText = text;
 }
 
-/* VOICE */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if(SpeechRecognition){
-  const rec = new SpeechRecognition();
-  rec.lang = "en-US";
-
-  function listen(){
-    setState("thinking","Listening...");
-    rec.start();
-  }
-
-  rec.onresult = e=>{
-    let text = e.results[0][0].transcript;
-
-    setState("thinking", text);
-
-    setTimeout(()=>{
-      setState("speaking","Processing...");
-    },1000);
-
-    setTimeout(()=>{
-      setState("idle","Awaiting next command.");
-    },3000);
-  };
-
-  document.addEventListener("keydown", e=>{
-    if(e.code==="Space") listen();
-  });
-}
-
-/* MATRIX BACKGROUND */
+/* MATRIX */
 const canvas = document.getElementById("matrix");
 const ctx = canvas.getContext("2d");
 
@@ -158,9 +140,6 @@ function draw(){
 }
 
 setInterval(draw,33);
-
-/* START */
-setState("idle","Ready.");
 </script>
 
 </body>
