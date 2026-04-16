@@ -20,9 +20,7 @@
       font-family:monospace;
     }
 
-    body{
-      position:relative;
-    }
+    body{ position:relative; }
 
     canvas{
       position:absolute;
@@ -30,9 +28,7 @@
       display:block;
     }
 
-    #matrix{
-      z-index:1;
-    }
+    #matrix{ z-index:1; }
 
     #fadeLayer{
       position:absolute;
@@ -379,7 +375,7 @@
   <div id="topbar">
     <div>
       <div id="brandTitle">ORACLE // ACTIVE</div>
-      <div id="brandSub">Intro + idle presence shell</div>
+      <div id="brandSub">OpenJarvis bridge online</div>
     </div>
     <div>
       <div id="clock">--:--:--</div>
@@ -406,7 +402,7 @@
       </div>
 
       <div id="hint">
-        press space or click listen · requires oracle-intro.webm and oracle-idle.webm
+        press space or click listen · bridge expects flask on http://127.0.0.1:5000/ask
       </div>
     </div>
   </div>
@@ -485,61 +481,51 @@
       });
     }
 
-    function getTimeReply() {
-      const now = new Date();
-      return "Current time is " + now.toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit"
-      }) + ".";
-    }
-
-    function interpret(text) {
-      const t = text.toLowerCase().trim();
-
-      if (t.includes("hello") || t.includes("hey oracle") || t.includes("hi")) {
-        return { mood: "speaking", reply: "I'm here." };
-      }
-      if (t.includes("help")) {
-        return { mood: "speaking", reply: "Tell me what you need. I can listen, reflect, and guide the next step." };
-      }
-      if (t.includes("plan")) {
-        return { mood: "thinking", reply: "Start with the highest-leverage move, then remove friction around it." };
-      }
-      if (t.includes("focus")) {
-        return { mood: "deep", reply: "Narrow the field. One priority. One direction. No drift." };
-      }
-      if (t.includes("status")) {
-        return { mood: "speaking", reply: "Systems nominal. Presence stable. Awaiting directive." };
-      }
-      if (t.includes("time")) {
-        return { mood: "speaking", reply: getTimeReply() };
-      }
-      if (t.includes("execute") || t.includes("do it")) {
-        return { mood: "executing", reply: "Directive accepted." };
-      }
-      if (t.includes("deep mode") || t.includes("go deep")) {
-        return { mood: "deep", reply: "Deeper layer engaged." };
-      }
-      if (t.includes("calm down") || t.includes("relax")) {
-        return { mood: "idle", reply: "Understood. Returning to a calmer state." };
-      }
-
-      return { mood: "speaking", reply: "I heard you. Give me a clearer directive and I will refine the response." };
-    }
-
-    function deliverReply(result, transcript) {
-      setOracleState(result.mood, result.reply, transcript);
-      speak(result.reply);
-
-      setTimeout(() => {
-        if (currentMood !== "listening") {
-          setOracleState("idle", "Awaiting next command.", transcript);
-        }
-      }, 4200);
-    }
-
     function resetToIdle() {
       setOracleState("idle", "Awaiting next command.", lastTranscript || "Awaiting input.");
+    }
+
+    async function askJarvis(query) {
+      const res = await fetch("http://127.0.0.1:5000/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+
+      if (!res.ok) {
+        throw new Error("Bridge request failed.");
+      }
+
+      const data = await res.json();
+      return data.response || "No response returned.";
+    }
+
+    function inferMoodFromResponse(text) {
+      const t = text.toLowerCase();
+      if (t.includes("warning") || t.includes("error") || t.includes("cannot")) return "alert";
+      if (t.includes("analyze") || t.includes("analysis") || t.includes("consider")) return "thinking";
+      if (t.includes("focus") || t.includes("strategy") || t.includes("priority")) return "deep";
+      return "speaking";
+    }
+
+    async function handleQuery(text) {
+      lastTranscript = text;
+      setOracleState("thinking", "Consulting local intelligence...", text);
+
+      try {
+        const reply = await askJarvis(text);
+        const mood = inferMoodFromResponse(reply);
+        setOracleState(mood, reply, text);
+        speak(reply);
+
+        setTimeout(() => {
+          if (currentMood !== "listening") {
+            setOracleState("idle", "Awaiting next command.", text);
+          }
+        }, 5000);
+      } catch (err) {
+        setOracleState("alert", "Bridge error. Check local server.", text);
+      }
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -568,13 +554,7 @@
         if (interim) heardEl.textContent = interim;
 
         if (finalText) {
-          lastTranscript = finalText;
-          setOracleState("thinking", "Analyzing.", finalText);
-
-          setTimeout(() => {
-            const result = interpret(finalText);
-            deliverReply(result, finalText);
-          }, 700);
+          handleQuery(finalText);
         }
       };
 
@@ -707,20 +687,10 @@
       rain = Array(columns).fill(0);
     });
 
-    window.oracleUpdate = function(data = {}) {
-      const mood = data.mood || "idle";
-      const response = data.response || "Awaiting directive.";
-      const transcript = data.transcript || lastTranscript || "Awaiting input.";
-      lastTranscript = transcript;
-      setOracleState(mood, response, transcript);
-      if (data.speak) speak(response);
-    };
-
     setOracleState("idle", "Stand by...", "Awaiting input.");
     updateClock();
     setInterval(updateClock, 1000);
     animate();
-
     playClip("intro", false);
   </script>
 </body>
