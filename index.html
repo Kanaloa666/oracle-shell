@@ -4,15 +4,13 @@
 <meta charset="UTF-8" />
 <title>ORACLE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 <style>
 :root{
-  --oracle:#00ff88;
-  --oracle-rgb:0,255,136;
-  --pulse:1;
+  --oracle-rgb: 0,255,136;
+  --pulse: 1;
 }
 
-html,body{
+html, body{
   margin:0;
   width:100%;
   height:100%;
@@ -22,63 +20,423 @@ html,body{
   font-family:monospace;
 }
 
-canvas{ position:absolute; inset:0; }
-
-#oracleWrap{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:420px;
-  z-index:3;
+body{
+  position:relative;
 }
 
-#oracle{
-  width:100%;
-  filter: drop-shadow(0 0 calc(20px * var(--pulse)) rgba(var(--oracle-rgb),0.5));
-  transition: filter 0.1s linear;
+canvas{
+  position:absolute;
+  inset:0;
+  display:block;
+}
+
+#matrix{
+  z-index:1;
 }
 
 #oracleGlow{
   position:absolute;
   top:50%;
   left:50%;
-  width:450px;
-  height:650px;
+  width:480px;
+  height:680px;
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle, rgba(var(--oracle-rgb), calc(0.25 * var(--pulse))) 0%, transparent 70%);
-  filter:blur(30px);
+  background:radial-gradient(circle, rgba(var(--oracle-rgb),0.20) 0%, transparent 72%);
+  filter:blur(34px);
   z-index:2;
+  pointer-events:none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+#oracleWrap{
+  position:absolute;
+  width:68vw;
+  max-width:1080px;
+  min-width:420px;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:4;
+}
+
+#oracle{
+  width:100%;
+  display:block;
+  mix-blend-mode:screen;
+  filter:
+    drop-shadow(0 0 calc(18px * var(--pulse)) rgba(var(--oracle-rgb),0.45))
+    drop-shadow(0 0 calc(46px * var(--pulse)) rgba(var(--oracle-rgb),0.22));
+  transition: opacity 0.45s ease, filter 0.1s linear;
+  animation: oracleFloat 7s ease-in-out infinite;
+}
+
+#orbSystem{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:220px;
+  height:220px;
+  transform:translate(-50%,-50%) scale(0.2);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 0.35s ease, transform 0.4s ease;
+}
+
+#orbCore{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at center,
+      rgba(var(--oracle-rgb),0.95) 0%,
+      rgba(var(--oracle-rgb),0.55) 24%,
+      rgba(var(--oracle-rgb),0.16) 54%,
+      rgba(var(--oracle-rgb),0.02) 72%,
+      rgba(var(--oracle-rgb),0) 100%);
+  filter: blur(6px);
+  box-shadow:
+    0 0 28px rgba(var(--oracle-rgb),0.55),
+    0 0 76px rgba(var(--oracle-rgb),0.22),
+    inset 0 0 28px rgba(255,255,255,0.18);
+}
+
+#orbPulse{
+  position:absolute;
+  inset:-18px;
+  border-radius:50%;
+  border:1px solid rgba(var(--oracle-rgb),0.28);
+  box-shadow:
+    0 0 18px rgba(var(--oracle-rgb),0.25),
+    inset 0 0 18px rgba(var(--oracle-rgb),0.18);
+}
+
+#orbRingA,
+#orbRingB,
+#orbRingC{
+  position:absolute;
+  border-radius:50%;
+  border:1px solid rgba(var(--oracle-rgb),0.32);
+  box-shadow: 0 0 16px rgba(var(--oracle-rgb),0.16);
+}
+
+#orbRingA{
+  inset:-28px;
+  border-style:solid;
+}
+
+#orbRingB{
+  inset:-48px;
+  border-style:dashed;
+  opacity:0.72;
+}
+
+#orbRingC{
+  inset:22px;
+  border-style:solid;
+  opacity:0.65;
+}
+
+#orbHalo{
+  position:absolute;
+  inset:-70px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(var(--oracle-rgb),0.18) 0%, rgba(var(--oracle-rgb),0.06) 30%, transparent 70%);
+  filter: blur(18px);
+}
+
+#orbParticles{
+  position:absolute;
+  inset:-80px;
+  border-radius:50%;
+}
+
+.thinking #oracle{
+  opacity:0;
+  transform:scale(0.82);
+}
+
+.thinking #orbSystem{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
+}
+
+.thinking #oracleGlow{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1.15);
+}
+
+.thinking #orbCore{
+  animation: orbCorePulse 1.25s ease-in-out infinite;
+}
+
+.thinking #orbPulse{
+  animation: orbShellPulse 1.25s ease-in-out infinite;
+}
+
+.thinking #orbRingA{
+  animation: ringSpinA 4.5s linear infinite;
+}
+
+.thinking #orbRingB{
+  animation: ringSpinB 3.2s linear infinite;
+}
+
+.thinking #orbRingC{
+  animation: ringSpinC 2.1s linear infinite;
+}
+
+.speaking #oracle{
+  animation: oracleFloat 7s ease-in-out infinite, oraclePulse 1.45s ease-in-out infinite;
+}
+
+.listening #oracleGlow,
+.speaking #oracleGlow{
+  animation: glowFloat 6s ease-in-out infinite, glowPulse 1.9s ease-in-out infinite;
+}
+
+.deep #oracleWrap{
+  animation: deepDrift 6.5s ease-in-out infinite;
+}
+
+.alert #oracle{
+  animation: oracleFloat 7s ease-in-out infinite, alertGlitch 0.18s steps(2,end) infinite;
+}
+
+#topbar{
+  position:absolute;
+  top:18px;
+  left:20px;
+  right:20px;
+  z-index:9;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  color:rgba(255,255,255,0.58);
+  text-transform:uppercase;
+  letter-spacing:.15em;
+  font-size:12px;
+}
+
+#brandTitle{
+  color:rgba(255,255,255,0.92);
+  margin-bottom:6px;
+}
+
+#brandSub{
+  font-size:10px;
+  opacity:.72;
+}
+
+#clock{
+  color:rgba(255,255,255,.9);
+  text-align:right;
+}
+
+#modeText{
+  text-align:right;
+  margin-top:4px;
 }
 
 #ui{
   position:absolute;
-  bottom:20px;
   left:50%;
+  bottom:24px;
   transform:translateX(-50%);
-  width:90%;
-  max-width:800px;
+  width:min(860px,94vw);
+  z-index:10;
 }
 
 #panel{
-  background:rgba(255,255,255,0.05);
-  padding:15px;
-  border-radius:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  padding:16px 18px 18px;
   backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 0 40px rgba(0,0,0,.32);
+}
+
+#statusRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.58);
+}
+
+#statusPill{
+  padding:5px 10px;
+  border-radius:999px;
+  border:1px solid rgba(var(--oracle-rgb),.28);
+  color:rgb(var(--oracle-rgb));
+  box-shadow:inset 0 0 18px rgba(var(--oracle-rgb),.06);
+}
+
+.label{
+  font-size:11px;
+  opacity:.58;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+
+#heard{
+  min-height:24px;
+  line-height:1.55;
+  font-size:15px;
+  color:rgba(255,255,255,.84);
+  margin-bottom:14px;
+}
+
+#response{
+  min-height:24px;
+  line-height:1.55;
+  font-size:18px;
+  color:rgba(255,255,255,.98);
+}
+
+#response::before{
+  content:"> ";
+  color:rgb(var(--oracle-rgb));
+}
+
+#controls{
+  margin-top:14px;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
 }
 
 button{
-  padding:10px 16px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
   border-radius:999px;
-  border:1px solid rgba(255,255,255,0.2);
-  background:rgba(255,255,255,0.1);
-  color:white;
+  padding:10px 16px;
+  font-family:monospace;
   cursor:pointer;
+  letter-spacing:1px;
 }
 
+button:hover{
+  background:rgba(255,255,255,.14);
+}
+
+#hint{
+  margin-top:12px;
+  font-size:11px;
+  opacity:.52;
+  text-align:center;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  line-height:1.7;
+}
+
+.scanlines,
+.vignette{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.scanlines{
+  z-index:7;
+  opacity:.08;
+  background-image:linear-gradient(to bottom, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size:100% 4px;
+  mix-blend-mode:screen;
+}
+
+.vignette{
+  z-index:8;
+  background:
+    radial-gradient(circle at center,
+      rgba(0,0,0,0) 30%,
+      rgba(0,0,0,.16) 60%,
+      rgba(0,0,0,.46) 100%);
+}
+
+body.idle{ --oracle-rgb: 0,170,255; }
+body.listening{ --oracle-rgb: 102,194,255; }
+body.thinking{ --oracle-rgb: 0,255,136; }
+body.executing{ --oracle-rgb: 0,255,136; }
+body.alert{ --oracle-rgb: 255,51,95; }
+body.speaking{ --oracle-rgb: 255,255,255; }
+body.deep{ --oracle-rgb: 168,109,255; }
+
+@keyframes oracleFloat{
+  0%,100%{ transform:translateY(0px); }
+  50%{ transform:translateY(-18px); }
+}
+
+@keyframes oraclePulse{
+  0%,100%{
+    filter:
+      brightness(1)
+      drop-shadow(0 0 calc(18px * var(--pulse)) rgba(var(--oracle-rgb),0.45))
+      drop-shadow(0 0 calc(46px * var(--pulse)) rgba(var(--oracle-rgb),0.22));
+  }
+  50%{
+    filter:
+      brightness(1.28)
+      drop-shadow(0 0 calc(24px * var(--pulse)) rgba(var(--oracle-rgb),0.58))
+      drop-shadow(0 0 calc(70px * var(--pulse)) rgba(var(--oracle-rgb),0.30));
+  }
+}
+
+@keyframes orbCorePulse{
+  0%,100%{ transform:scale(1); filter:blur(6px) brightness(1); }
+  50%{ transform:scale(1.12); filter:blur(9px) brightness(1.35); }
+}
+
+@keyframes orbShellPulse{
+  0%,100%{ transform:scale(1); opacity:.72; }
+  50%{ transform:scale(1.18); opacity:1; }
+}
+
+@keyframes ringSpinA{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes ringSpinB{
+  from{ transform:rotate(360deg) scale(1.04); }
+  to{ transform:rotate(0deg) scale(1.04); }
+}
+
+@keyframes ringSpinC{
+  from{ transform:rotate(0deg) scale(.94); }
+  to{ transform:rotate(-360deg) scale(.94); }
+}
+
+@keyframes glowFloat{
+  0%,100%{ transform:translate(-50%,-50%) translateY(0px); }
+  50%{ transform:translate(-50%,-50%) translateY(-10px); }
+}
+
+@keyframes glowPulse{
+  0%,100%{ opacity:.78; }
+  50%{ opacity:1; }
+}
+
+@keyframes deepDrift{
+  0%,100%{ transform:translate(-50%,-50%) translateX(0px) translateY(0px); }
+  50%{ transform:translate(-50%,-50%) translateX(26px) translateY(-8px); }
+}
+
+@keyframes alertGlitch{
+  0%{ transform:translateY(0px) translateX(0px); }
+  25%{ transform:translateY(-1px) translateX(-2px); }
+  50%{ transform:translateY(1px) translateX(2px); }
+  75%{ transform:translateY(-2px) translateX(1px); }
+  100%{ transform:translateY(0px) translateX(0px); }
+}
 </style>
 </head>
-
 <body class="idle">
 
 <canvas id="matrix"></canvas>
@@ -86,152 +444,464 @@ button{
 
 <div id="oracleWrap">
   <video id="oracle" autoplay muted loop playsinline src="oracle-idle.webm"></video>
+
+  <div id="orbSystem">
+    <div id="orbHalo"></div>
+    <div id="orbRingA"></div>
+    <div id="orbRingB"></div>
+    <div id="orbRingC"></div>
+    <div id="orbPulse"></div>
+    <div id="orbCore"></div>
+    <canvas id="orbParticles"></canvas>
+  </div>
+</div>
+
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<div id="topbar">
+  <div>
+    <div id="brandTitle">ORACLE // ACTIVE</div>
+    <div id="brandSub">Orb compression intelligence state</div>
+  </div>
+  <div>
+    <div id="clock">--:--:--</div>
+    <div id="modeText">Mode: calm</div>
+  </div>
 </div>
 
 <div id="ui">
   <div id="panel">
-    <div id="heard">Awaiting input</div>
-    <div id="response">...</div>
-    <button onclick="startListening()">LISTEN</button>
+    <div id="statusRow">
+      <div>Oracle Console</div>
+      <div id="statusPill">IDLE</div>
+    </div>
+
+    <div class="label">Transcript</div>
+    <div id="heard">Awaiting input.</div>
+
+    <div class="label">Response</div>
+    <div id="response">Press LISTEN or hit SPACE.</div>
+
+    <div id="controls">
+      <button id="listenBtn">LISTEN</button>
+      <button id="resetBtn">RESET</button>
+    </div>
+
+    <div id="hint">
+      thinking mode compresses oracle into an energy sphere · keep local bridge running
+    </div>
   </div>
 </div>
 
 <script>
+const body = document.body;
+const oracleWrap = document.getElementById("oracleWrap");
+const oracle = document.getElementById("oracle");
 const responseEl = document.getElementById("response");
 const heardEl = document.getElementById("heard");
+const listenBtn = document.getElementById("listenBtn");
+const resetBtn = document.getElementById("resetBtn");
+const statusPill = document.getElementById("statusPill");
+const modeText = document.getElementById("modeText");
+const clockEl = document.getElementById("clock");
 
 let speaking = false;
-let pulse = 1;
-let pulseTarget = 1;
+let currentState = "idle";
+let targetX = window.innerWidth / 2;
+let targetY = window.innerHeight / 2;
+let currentX = targetX;
+let currentY = targetY;
+let lastTranscript = "";
+let orbHum = null;
 
-// ==========================
-// 🎤 VOICE
-// ==========================
+function setState(state){
+  currentState = state;
+  body.className = state;
+  statusPill.textContent = state.toUpperCase();
+
+  const modes = {
+    idle: "Mode: calm",
+    listening: "Mode: attentive",
+    thinking: "Mode: compression",
+    speaking: "Mode: voice",
+    alert: "Mode: warning",
+    deep: "Mode: deep focus",
+    executing: "Mode: aligned"
+  };
+
+  modeText.textContent = modes[state] || "Mode: calm";
+
+  if(state === "thinking"){
+    startOrbHum();
+  } else {
+    stopOrbHum();
+  }
+}
+
+function updateClock(){
+  const now = new Date();
+  clockEl.textContent = now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function startOrbHum(){
+  stopOrbHum();
+
+  try{
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = 88;
+
+    lfo.type = "sine";
+    lfo.frequency.value = 1.8;
+    lfoGain.gain.value = 8;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    gain.gain.value = 0.015;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    lfo.start();
+
+    orbHum = { ctx, osc, gain, lfo };
+  } catch(err){
+    orbHum = null;
+  }
+}
+
+function stopOrbHum(){
+  if(!orbHum) return;
+  try{
+    orbHum.gain.gain.value = 0.0001;
+    orbHum.osc.stop();
+    orbHum.lfo.stop();
+    orbHum.ctx.close();
+  } catch(err){}
+  orbHum = null;
+}
+
+function pickNewTarget(){
+  if(currentState === "speaking"){
+    targetX = window.innerWidth / 2;
+    targetY = window.innerHeight / 2;
+    return;
+  }
+
+  if(currentState === "thinking"){
+    targetX = window.innerWidth / 2 + (Math.random() * 120 - 60);
+    targetY = window.innerHeight / 2 + (Math.random() * 80 - 40);
+    return;
+  }
+
+  targetX = Math.random() * (window.innerWidth * 0.7) + window.innerWidth * 0.15;
+  targetY = Math.random() * (window.innerHeight * 0.45) + window.innerHeight * 0.18;
+}
+
+setInterval(pickNewTarget, 4200);
+
+function moveOracle(){
+  const speed = currentState === "speaking" ? 0.022 :
+                currentState === "thinking" ? 0.02 :
+                0.008;
+
+  currentX += (targetX - currentX) * speed;
+  currentY += (targetY - currentY) * speed;
+
+  oracleWrap.style.left = currentX + "px";
+  oracleWrap.style.top = currentY + "px";
+
+  requestAnimationFrame(moveOracle);
+}
+moveOracle();
+
 function speakOracle(text){
   const u = new SpeechSynthesisUtterance(text);
-
-  u.rate = 0.88;
-  u.pitch = 0.9;
+  u.rate = 0.84;
+  u.pitch = 0.82;
   u.volume = 1;
 
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    /zira|aria|susan|jenny|female|woman/i.test(v.name)
+  ) || voices.find(v => /english/i.test(v.lang || "")) || null;
+
+  if(preferred) u.voice = preferred;
+
   speaking = true;
+  setState("speaking");
+  targetX = window.innerWidth / 2;
+  targetY = window.innerHeight / 2;
 
   u.onstart = () => {
-    document.body.className = "speaking";
     animateVoice();
   };
 
   u.onend = () => {
     speaking = false;
-    document.body.className = "idle";
+    setState("idle");
+    responseEl.innerText = text;
   };
 
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-// ==========================
-// 🎯 FAKE AUDIO REACTIVE PULSE
-// ==========================
 function animateVoice(){
   function loop(){
     if(!speaking) return;
-
-    pulseTarget = 1 + Math.random() * 0.8;
-
-    document.documentElement.style.setProperty("--pulse", pulseTarget);
-
+    const pulse = 1 + Math.random() * 0.85;
+    document.documentElement.style.setProperty("--pulse", pulse.toFixed(2));
     requestAnimationFrame(loop);
   }
   loop();
 }
 
-// ==========================
-// 🧠 BACKEND CALL
-// ==========================
 async function askOracle(query){
-  responseEl.innerText = "Consulting local intelligence...";
-  document.body.className = "thinking";
+  setState("thinking");
+  responseEl.innerText = "Compressing intelligence...";
+  lastTranscript = query;
 
   try{
     const res = await fetch("http://127.0.0.1:5000/ask", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ query })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query })
     });
 
     const data = await res.json();
-    const reply = data.response || "No response.";
+    const reply = data.response || "Oracle did not return a response.";
 
     responseEl.innerText = reply;
+    setState("idle");
     speakOracle(reply);
 
   }catch(err){
-    responseEl.innerText = "Bridge error.";
-    document.body.className = "alert";
+    setState("alert");
+    responseEl.innerText = "Bridge failure.";
   }
 }
 
-// ==========================
-// 🎤 SPEECH RECOGNITION
-// ==========================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition;
+let recognition = null;
 
 if(SpeechRecognition){
   recognition = new SpeechRecognition();
   recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = true;
 
-  recognition.onresult = (e)=>{
-    const text = e.results[0][0].transcript;
-    heardEl.innerText = text;
-    askOracle(text);
+  recognition.onresult = e => {
+    let interim = "";
+    let finalText = "";
+
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const chunk = e.results[i][0].transcript;
+      if(e.results[i].isFinal) finalText += chunk;
+      else interim += chunk;
+    }
+
+    if(interim){
+      heardEl.innerText = interim;
+    }
+
+    if(finalText){
+      heardEl.innerText = finalText;
+      askOracle(finalText);
+    }
+  };
+
+  recognition.onerror = e => {
+    setState("alert");
+    responseEl.innerText = "Voice error: " + e.error;
   };
 }
 
 function startListening(){
-  if(recognition){
-    recognition.start();
-    document.body.className = "listening";
-  }
+  if(!recognition) return;
+  setState("listening");
+  responseEl.innerText = "Listening...";
+  recognition.start();
 }
 
-// ==========================
-// 🟩 MATRIX BACKGROUND
-// ==========================
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
+function resetOracle(){
+  speechSynthesis.cancel();
+  stopOrbHum();
+  setState("idle");
+  responseEl.innerText = "Press LISTEN or hit SPACE.";
+  heardEl.innerText = lastTranscript || "Awaiting input.";
+}
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+listenBtn.addEventListener("click", startListening);
+resetBtn.addEventListener("click", resetOracle);
 
-const letters = "01";
+document.addEventListener("keydown", e => {
+  if(e.code === "Space"){
+    e.preventDefault();
+    startListening();
+  }
+});
+
+const matrix = document.getElementById("matrix");
+const mctx = matrix.getContext("2d");
+
+function resizeMatrix(){
+  matrix.width = window.innerWidth;
+  matrix.height = window.innerHeight;
+}
+resizeMatrix();
+
+const letters = "01アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const fontSize = 16;
-const columns = canvas.width / fontSize;
+let columns = Math.floor(window.innerWidth / fontSize);
+let drops = Array(columns).fill(1);
+let frame = 0;
 
-const drops = [];
-for(let i=0;i<columns;i++) drops[i]=1;
+function drawMatrix(){
+  matrix.width = window.innerWidth;
+  matrix.height = window.innerHeight;
 
-function draw(){
-  ctx.fillStyle="rgba(0,0,0,0.05)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  columns = Math.floor(window.innerWidth / fontSize);
+  if(drops.length !== columns){
+    drops = Array(columns).fill(1);
+  }
 
-  ctx.fillStyle="#0f0";
-  ctx.font=fontSize+"px monospace";
+  mctx.fillStyle = "rgba(0,0,0,0.06)";
+  mctx.fillRect(0,0,matrix.width,matrix.height);
+
+  const colorMap = {
+    idle: "0,170,255",
+    listening: "102,194,255",
+    thinking: "0,255,136",
+    speaking: "255,255,255",
+    alert: "255,51,95",
+    deep: "168,109,255",
+    executing: "0,255,136"
+  };
+
+  const rgb = colorMap[currentState] || "0,255,136";
+  const centerX = currentX;
+  const centerY = currentY;
+  const influence = currentState === "thinking" ? 280 : 180;
+
+  mctx.font = fontSize + "px monospace";
 
   for(let i=0;i<drops.length;i++){
-    const text = letters[Math.floor(Math.random()*letters.length)];
-    ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+    const x = i * fontSize;
+    let y = drops[i] * fontSize;
+    const char = letters[Math.floor(Math.random() * letters.length)];
 
-    if(drops[i]*fontSize>canvas.height && Math.random()>0.975)
-      drops[i]=0;
+    const dx = centerX - x;
+    const dy = centerY - y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
 
-    drops[i]++;
+    let alpha = 0.22;
+    let speed = 1;
+
+    if(currentState === "thinking" && dist < influence){
+      const pull = 1 - dist / influence;
+      alpha += pull * 0.42;
+      speed = 0.55;
+
+      y += dy * 0.015 * pull;
+      const pullX = dx * 0.01 * pull;
+
+      mctx.fillStyle = `rgba(${rgb}, ${Math.max(0.08, Math.min(alpha, 1))})`;
+      mctx.fillText(char, x + pullX, y);
+    } else {
+      if(currentState === "speaking" && dist < 220){
+        alpha += 0.18;
+      }
+      mctx.fillStyle = `rgba(${rgb}, ${Math.max(0.06, Math.min(alpha, 1))})`;
+      mctx.fillText(char, x, y);
+    }
+
+    drops[i] += speed;
+
+    if(drops[i] * fontSize > matrix.height && Math.random() > 0.975){
+      drops[i] = 0;
+    }
   }
+
+  frame++;
+  requestAnimationFrame(drawMatrix);
 }
+drawMatrix();
 
-setInterval(draw,33);
+const orbCanvas = document.getElementById("orbParticles");
+const octx = orbCanvas.getContext("2d");
 
+function resizeOrbCanvas(){
+  orbCanvas.width = orbCanvas.offsetWidth || 380;
+  orbCanvas.height = orbCanvas.offsetHeight || 380;
+}
+resizeOrbCanvas();
+
+const orbParticles = Array.from({length: 85}, () => ({
+  angle: Math.random() * Math.PI * 2,
+  radius: 40 + Math.random() * 120,
+  speed: 0.005 + Math.random() * 0.015,
+  size: 1 + Math.random() * 2,
+  drift: 0.2 + Math.random() * 0.6
+}));
+
+function drawOrbParticles(){
+  resizeOrbCanvas();
+  octx.clearRect(0,0,orbCanvas.width,orbCanvas.height);
+
+  const cx = orbCanvas.width / 2;
+  const cy = orbCanvas.height / 2;
+
+  if(currentState === "thinking"){
+    for(const p of orbParticles){
+      p.angle += p.speed;
+      p.radius -= p.drift * 0.45;
+      if(p.radius < 18){
+        p.radius = 120 + Math.random() * 55;
+        p.angle = Math.random() * Math.PI * 2;
+      }
+
+      const x = cx + Math.cos(p.angle) * p.radius;
+      const y = cy + Math.sin(p.angle) * p.radius;
+
+      octx.beginPath();
+      octx.fillStyle = "rgba(0,255,136,0.75)";
+      octx.arc(x, y, p.size, 0, Math.PI * 2);
+      octx.fill();
+    }
+  }
+
+  requestAnimationFrame(drawOrbParticles);
+}
+drawOrbParticles();
+
+window.addEventListener("resize", () => {
+  resizeMatrix();
+  resizeOrbCanvas();
+  targetX = window.innerWidth / 2;
+  targetY = window.innerHeight / 2;
+});
+
+setState("idle");
+responseEl.innerText = "Press LISTEN or hit SPACE.";
+heardEl.innerText = "Awaiting input.";
 </script>
 </body>
 </html>
