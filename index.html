@@ -4,1002 +4,171 @@
 <meta charset="UTF-8" />
 <title>ORACLE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <style>
-:root{
-  --oracle-rgb: 0,255,136;
-  --pulse: 1;
-}
-
-html, body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#000;
-  color:#fff;
-  font-family:monospace;
-}
-
 body{
-  position:relative;
+  margin:0;
+  background:black;
+  color:white;
+  font-family:monospace;
+  overflow:hidden;
 }
 
-canvas{
-  position:absolute;
-  inset:0;
-  display:block;
-}
-
-#matrix{
-  z-index:1;
-}
-
-#oracleGlow{
+/* ORACLE */
+#oracleWrap{
   position:absolute;
   top:50%;
   left:50%;
-  width:min(34vw, 420px);
-  height:min(60vh, 620px);
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle, rgba(var(--oracle-rgb),0.18) 0%, transparent 72%);
-  filter:blur(30px);
-  z-index:2;
-  pointer-events:none;
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-#oracleWrap{
-  position:absolute;
-  width:min(34vw, 52vh);
-  max-width:520px;
-  min-width:240px;
-  transform:translate(-50%,-50%);
-  pointer-events:none;
-  z-index:4;
+  width:min(40vw, 450px);
 }
 
 #oracle{
   width:100%;
-  height:auto;
-  display:block;
-  object-fit:contain;
-  mix-blend-mode:screen;
-  filter:
-    drop-shadow(0 0 calc(14px * var(--pulse)) rgba(var(--oracle-rgb),0.42))
-    drop-shadow(0 0 calc(34px * var(--pulse)) rgba(var(--oracle-rgb),0.20));
-  transition: opacity 0.45s ease, filter 0.1s linear, transform 0.45s ease;
-  animation: oracleFloat 7s ease-in-out infinite;
-}
-
-#reformCanvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  pointer-events:none;
-  opacity:0;
-  z-index:5;
-}
-
-.reforming #reformCanvas{
   opacity:1;
+  transition:0.3s;
 }
 
-.reforming #oracle{
-  opacity:0;
-}
-
-#orbSystem{
+/* THINKING ORB */
+#orb{
   position:absolute;
   top:50%;
   left:50%;
-  width:170px;
-  height:170px;
-  transform:translate(-50%,-50%) scale(0.2);
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);
+  background:radial-gradient(circle, #00ff88, transparent 70%);
   opacity:0;
-  pointer-events:none;
-  transition: opacity 0.35s ease, transform 0.4s ease;
+  transition:0.3s;
 }
 
-#orbCore{
-  position:absolute;
-  inset:0;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at center,
-      rgba(var(--oracle-rgb),0.95) 0%,
-      rgba(var(--oracle-rgb),0.55) 24%,
-      rgba(var(--oracle-rgb),0.16) 54%,
-      rgba(var(--oracle-rgb),0.02) 72%,
-      rgba(var(--oracle-rgb),0) 100%);
-  filter: blur(6px);
-  box-shadow:
-    0 0 22px rgba(var(--oracle-rgb),0.55),
-    0 0 60px rgba(var(--oracle-rgb),0.22),
-    inset 0 0 22px rgba(255,255,255,0.18);
-}
-
-#orbPulse{
-  position:absolute;
-  inset:-14px;
-  border-radius:50%;
-  border:1px solid rgba(var(--oracle-rgb),0.28);
-  box-shadow:
-    0 0 14px rgba(var(--oracle-rgb),0.25),
-    inset 0 0 14px rgba(var(--oracle-rgb),0.18);
-}
-
-#orbRingA,
-#orbRingB,
-#orbRingC{
-  position:absolute;
-  border-radius:50%;
-  border:1px solid rgba(var(--oracle-rgb),0.32);
-  box-shadow: 0 0 14px rgba(var(--oracle-rgb),0.16);
-}
-
-#orbRingA{
-  inset:-22px;
-  border-style:solid;
-}
-
-#orbRingB{
-  inset:-38px;
-  border-style:dashed;
-  opacity:0.72;
-}
-
-#orbRingC{
-  inset:18px;
-  border-style:solid;
-  opacity:0.65;
-}
-
-#orbHalo{
-  position:absolute;
-  inset:-54px;
-  border-radius:50%;
-  background:radial-gradient(circle, rgba(var(--oracle-rgb),0.18) 0%, rgba(var(--oracle-rgb),0.06) 30%, transparent 70%);
-  filter: blur(18px);
-}
-
-#orbParticles{
-  position:absolute;
-  inset:-70px;
-  border-radius:50%;
-}
-
-.thinking #oracle{
-  opacity:0;
-  transform:scale(0.82);
-}
-
-.thinking #orbSystem{
+/* STATES */
+.thinking #oracle{ opacity:0; }
+.thinking #orb{
   opacity:1;
   transform:translate(-50%,-50%) scale(1);
+  animation:pulse 1.2s infinite;
 }
 
-.thinking #oracleGlow{
-  opacity:1;
-  transform:translate(-50%,-50%) scale(1.15);
+@keyframes pulse{
+  0%,100%{ transform:translate(-50%,-50%) scale(1); }
+  50%{ transform:translate(-50%,-50%) scale(1.2); }
 }
 
-.thinking #orbCore{
-  animation: orbCorePulse 1.25s ease-in-out infinite;
-}
-
-.thinking #orbPulse{
-  animation: orbShellPulse 1.25s ease-in-out infinite;
-}
-
-.thinking #orbRingA{
-  animation: ringSpinA 4.5s linear infinite;
-}
-
-.thinking #orbRingB{
-  animation: ringSpinB 3.2s linear infinite;
-}
-
-.thinking #orbRingC{
-  animation: ringSpinC 2.1s linear infinite;
-}
-
-.speaking #oracle{
-  animation: oracleFloat 7s ease-in-out infinite, oraclePulse 1.45s ease-in-out infinite;
-}
-
-.listening #oracleGlow,
-.speaking #oracleGlow{
-  animation: glowFloat 6s ease-in-out infinite, glowPulse 1.9s ease-in-out infinite;
-}
-
-.deep #oracleWrap{
-  animation: deepDrift 6.5s ease-in-out infinite;
-}
-
-.alert #oracle{
-  animation: oracleFloat 7s ease-in-out infinite, alertGlitch 0.18s steps(2,end) infinite;
-}
-
-#topbar{
-  position:absolute;
-  top:18px;
-  left:20px;
-  right:20px;
-  z-index:9;
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  color:rgba(255,255,255,0.58);
-  text-transform:uppercase;
-  letter-spacing:.15em;
-  font-size:12px;
-}
-
-#brandTitle{
-  color:rgba(255,255,255,0.92);
-  margin-bottom:6px;
-}
-
-#brandSub{
-  font-size:10px;
-  opacity:.72;
-}
-
-#clock{
-  color:rgba(255,255,255,.9);
-  text-align:right;
-}
-
-#modeText{
-  text-align:right;
-  margin-top:4px;
-}
-
+/* UI */
 #ui{
   position:absolute;
+  bottom:20px;
   left:50%;
-  bottom:24px;
   transform:translateX(-50%);
-  width:min(860px,94vw);
-  z-index:10;
+  width:90%;
+  max-width:700px;
+  text-align:center;
 }
 
-#panel{
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:18px;
-  padding:16px 18px 18px;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  box-shadow:0 0 40px rgba(0,0,0,.32);
-}
-
-#statusRow{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:14px;
-  font-size:11px;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.58);
-}
-
-#statusPill{
-  padding:5px 10px;
-  border-radius:999px;
-  border:1px solid rgba(var(--oracle-rgb),.28);
-  color:rgb(var(--oracle-rgb));
-  box-shadow:inset 0 0 18px rgba(var(--oracle-rgb),.06);
-}
-
-.label{
-  font-size:11px;
-  opacity:.58;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  margin-bottom:6px;
-}
-
-#heard{
-  min-height:24px;
-  line-height:1.55;
-  font-size:15px;
-  color:rgba(255,255,255,.84);
-  margin-bottom:14px;
-}
-
-#response{
-  min-height:24px;
-  line-height:1.55;
-  font-size:18px;
-  color:rgba(255,255,255,.98);
-}
-
-#response::before{
-  content:"> ";
-  color:rgb(var(--oracle-rgb));
-}
-
-#controls{
-  margin-top:14px;
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
+#heard{ opacity:0.7; margin-bottom:10px; }
+#response{ font-size:18px; }
 
 button{
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:999px;
-  padding:10px 16px;
-  font-family:monospace;
+  margin-top:10px;
+  padding:10px 20px;
+  border:none;
+  background:#00ff88;
+  color:black;
   cursor:pointer;
-  letter-spacing:1px;
-}
-
-button:hover{
-  background:rgba(255,255,255,.14);
-}
-
-#hint{
-  margin-top:12px;
-  font-size:11px;
-  opacity:.52;
-  text-align:center;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  line-height:1.7;
-}
-
-.scanlines,
-.vignette{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-
-.scanlines{
-  z-index:7;
-  opacity:.08;
-  background-image:linear-gradient(to bottom, rgba(255,255,255,.045) 1px, transparent 1px);
-  background-size:100% 4px;
-  mix-blend-mode:screen;
-}
-
-.vignette{
-  z-index:8;
-  background:
-    radial-gradient(circle at center,
-      rgba(0,0,0,0) 30%,
-      rgba(0,0,0,.16) 60%,
-      rgba(0,0,0,.46) 100%);
-}
-
-body.idle{ --oracle-rgb: 0,170,255; }
-body.listening{ --oracle-rgb: 102,194,255; }
-body.thinking{ --oracle-rgb: 0,255,136; }
-body.executing{ --oracle-rgb: 0,255,136; }
-body.alert{ --oracle-rgb: 255,51,95; }
-body.speaking{ --oracle-rgb: 255,255,255; }
-body.deep{ --oracle-rgb: 168,109,255; }
-
-@keyframes oracleFloat{
-  0%,100%{ transform:translateY(0px); }
-  50%{ transform:translateY(-14px); }
-}
-
-@keyframes oraclePulse{
-  0%,100%{
-    filter:
-      brightness(1)
-      drop-shadow(0 0 calc(14px * var(--pulse)) rgba(var(--oracle-rgb),0.42))
-      drop-shadow(0 0 calc(34px * var(--pulse)) rgba(var(--oracle-rgb),0.20));
-  }
-  50%{
-    filter:
-      brightness(1.28)
-      drop-shadow(0 0 calc(20px * var(--pulse)) rgba(var(--oracle-rgb),0.58))
-      drop-shadow(0 0 calc(54px * var(--pulse)) rgba(var(--oracle-rgb),0.30));
-  }
-}
-
-@keyframes orbCorePulse{
-  0%,100%{ transform:scale(1); filter:blur(6px) brightness(1); }
-  50%{ transform:scale(1.12); filter:blur(9px) brightness(1.35); }
-}
-
-@keyframes orbShellPulse{
-  0%,100%{ transform:scale(1); opacity:.72; }
-  50%{ transform:scale(1.18); opacity:1; }
-}
-
-@keyframes ringSpinA{
-  from{ transform:rotate(0deg); }
-  to{ transform:rotate(360deg); }
-}
-
-@keyframes ringSpinB{
-  from{ transform:rotate(360deg) scale(1.04); }
-  to{ transform:rotate(0deg) scale(1.04); }
-}
-
-@keyframes ringSpinC{
-  from{ transform:rotate(0deg) scale(.94); }
-  to{ transform:rotate(-360deg) scale(.94); }
-}
-
-@keyframes glowFloat{
-  0%,100%{ transform:translate(-50%,-50%) translateY(0px); }
-  50%{ transform:translate(-50%,-50%) translateY(-8px); }
-}
-
-@keyframes glowPulse{
-  0%,100%{ opacity:.78; }
-  50%{ opacity:1; }
-}
-
-@keyframes deepDrift{
-  0%,100%{ transform:translate(-50%,-50%) translateX(0px) translateY(0px); }
-  50%{ transform:translate(-50%,-50%) translateX(20px) translateY(-6px); }
-}
-
-@keyframes alertGlitch{
-  0%{ transform:translateY(0px) translateX(0px); }
-  25%{ transform:translateY(-1px) translateX(-2px); }
-  50%{ transform:translateY(1px) translateX(2px); }
-  75%{ transform:translateY(-2px) translateX(1px); }
-  100%{ transform:translateY(0px) translateX(0px); }
 }
 </style>
 </head>
-<body class="idle">
 
-<canvas id="matrix"></canvas>
-<div id="oracleGlow"></div>
+<body>
 
 <div id="oracleWrap">
   <video id="oracle" autoplay muted loop playsinline src="oracle-idle.webm"></video>
-  <canvas id="reformCanvas"></canvas>
-
-  <div id="orbSystem">
-    <div id="orbHalo"></div>
-    <div id="orbRingA"></div>
-    <div id="orbRingB"></div>
-    <div id="orbRingC"></div>
-    <div id="orbPulse"></div>
-    <div id="orbCore"></div>
-    <canvas id="orbParticles"></canvas>
-  </div>
-</div>
-
-<div class="scanlines"></div>
-<div class="vignette"></div>
-
-<div id="topbar">
-  <div>
-    <div id="brandTitle">ORACLE // ACTIVE</div>
-    <div id="brandSub">Tiered intelligence active</div>
-  </div>
-  <div>
-    <div id="clock">--:--:--</div>
-    <div id="modeText">Mode: calm</div>
-  </div>
+  <div id="orb"></div>
 </div>
 
 <div id="ui">
-  <div id="panel">
-    <div id="statusRow">
-      <div>Oracle Console</div>
-      <div id="statusPill">IDLE</div>
-    </div>
-
-    <div class="label">Transcript</div>
-    <div id="heard">Awaiting input.</div>
-
-    <div class="label">Response</div>
-    <div id="response">Press LISTEN or hit SPACE.</div>
-
-    <div id="controls">
-      <button id="listenBtn">LISTEN</button>
-      <button id="resetBtn">RESET</button>
-    </div>
-
-    <div id="hint">
-      short = fast · normal = balanced · analysis language = deep
-    </div>
-  </div>
+  <div id="heard">Awaiting input...</div>
+  <div id="response">Press LISTEN</div>
+  <button onclick="startListening()">LISTEN</button>
 </div>
 
 <script>
 const body = document.body;
-const oracleWrap = document.getElementById("oracleWrap");
-const oracle = document.getElementById("oracle");
-const reformCanvas = document.getElementById("reformCanvas");
-const rctx = reformCanvas.getContext("2d");
+const heard = document.getElementById("heard");
 const responseEl = document.getElementById("response");
-const heardEl = document.getElementById("heard");
-const listenBtn = document.getElementById("listenBtn");
-const resetBtn = document.getElementById("resetBtn");
-const statusPill = document.getElementById("statusPill");
-const modeText = document.getElementById("modeText");
-const clockEl = document.getElementById("clock");
 
-let speaking = false;
-let currentState = "idle";
-let targetX = window.innerWidth / 2;
-let targetY = window.innerHeight / 2;
-let currentX = targetX;
-let currentY = targetY;
-let lastTranscript = "";
-let reforming = false;
-let reformParticles = [];
-let currentModelMode = "balanced";
-
-function setState(state){
-  currentState = state;
-  body.className = state + (reforming ? " reforming" : "");
-  statusPill.textContent = state.toUpperCase();
-
-  const modes = {
-    idle: `Mode: calm · ${currentModelMode}`,
-    listening: `Mode: attentive · ${currentModelMode}`,
-    thinking: `Mode: compression · ${currentModelMode}`,
-    speaking: `Mode: voice · ${currentModelMode}`,
-    alert: `Mode: warning · ${currentModelMode}`,
-    deep: `Mode: deep focus · ${currentModelMode}`,
-    executing: `Mode: aligned · ${currentModelMode}`
-  };
-  modeText.textContent = modes[state] || `Mode: calm · ${currentModelMode}`;
+function setThinking(on){
+  if(on) body.classList.add("thinking");
+  else body.classList.remove("thinking");
 }
 
-function setReforming(isOn){
-  reforming = isOn;
-  body.className = currentState + (reforming ? " reforming" : "");
-}
-
-function updateClock(){
-  const now = new Date();
-  clockEl.textContent = now.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-function chooseEndpoint(query){
-  const q = query.toLowerCase().trim();
-
-  const deepTriggers = [
-    "analyze", "analysis", "deep", "strategy", "strategic", "insight",
-    "interpret", "meaning", "pattern", "break this down", "think deeply",
-    "what am i missing", "root cause", "why am i", "long term", "bigger picture"
-  ];
-
-  if (deepTriggers.some(t => q.includes(t)) || query.length > 140) {
-    currentModelMode = "deep";
-    return "http://127.0.0.1:5000/deepask";
-  }
-
-  if (query.length < 45) {
-    currentModelMode = "fast";
-    return "http://127.0.0.1:5000/fast";
-  }
-
-  currentModelMode = "balanced";
-  return "http://127.0.0.1:5000/ask";
-}
-
-function pickPreferredVoice(){
+/* VOICE */
+function getVoice(){
   const voices = speechSynthesis.getVoices();
-  if (!voices.length) return null;
 
-  const preferredNames = [
-    "Microsoft Aria Online",
-    "Microsoft Jenny Online",
-    "Microsoft Zira",
-    "Aria",
-    "Jenny",
-    "Zira",
-    "Samantha",
-    "Victoria"
-  ];
-
-  for (const name of preferredNames) {
-    const found = voices.find(v => v.name && v.name.includes(name));
-    if (found) return found;
-  }
-
-  const femaleish = voices.find(v =>
-    /aria|zira|jenny|samantha|victoria|susan|female|woman/i.test(v.name)
-  );
-  if (femaleish) return femaleish;
-
-  const english = voices.find(v => /en/i.test(v.lang || ""));
-  return english || voices[0];
+  return voices.find(v =>
+    /zira|aria|jenny|samantha|female/i.test(v.name)
+  ) || voices[0];
 }
 
-function speakOracle(text){
+function speak(text){
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.82;
-  u.pitch = 0.84;
-  u.volume = 1;
-
-  const preferred = pickPreferredVoice();
-  if (preferred) u.voice = preferred;
-
-  speaking = true;
-  setState("speaking");
-  targetX = window.innerWidth / 2;
-  targetY = window.innerHeight / 2;
-
-  u.onstart = () => animateVoice();
-  u.onend = () => {
-    speaking = false;
-    setState("idle");
-    responseEl.innerText = text;
-  };
+  u.voice = getVoice();
+  u.rate = 0.85;
+  u.pitch = 0.85;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-function animateVoice(){
-  function loop(){
-    if(!speaking) return;
-    const pulse = 1 + Math.random() * 0.85;
-    document.documentElement.style.setProperty("--pulse", pulse.toFixed(2));
-    requestAnimationFrame(loop);
-  }
-  loop();
-}
-
-function resizeReformCanvas(){
-  reformCanvas.width = oracle.clientWidth || 520;
-  reformCanvas.height = oracle.clientHeight || 520;
-}
-
-function initReformation(){
-  resizeReformCanvas();
-  reformParticles = [];
-  const w = reformCanvas.width;
-  const h = reformCanvas.height;
-
-  for(let i = 0; i < 520; i++){
-    const tx = Math.random() * w;
-    const ty = Math.random() * h;
-
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 120 + Math.random() * 180;
-
-    const sx = w / 2 + Math.cos(angle) * dist;
-    const sy = h / 2 + Math.sin(angle) * dist;
-
-    reformParticles.push({
-      x: sx,
-      y: sy,
-      tx,
-      ty,
-      vx: 0,
-      vy: 0,
-      size: 1 + Math.random() * 2.0,
-      alpha: 0.35 + Math.random() * 0.65
-    });
-  }
-}
-
-function runReformation(callback){
-  setReforming(true);
-  initReformation();
-
-  let frames = 0;
-  const maxFrames = currentModelMode === "deep" ? 105 : 80;
-
-  function step(){
-    frames++;
-    rctx.clearRect(0, 0, reformCanvas.width, reformCanvas.height);
-
-    for(const p of reformParticles){
-      const dx = p.tx - p.x;
-      const dy = p.ty - p.y;
-
-      p.vx += dx * 0.022;
-      p.vy += dy * 0.022;
-      p.vx *= 0.83;
-      p.vy *= 0.83;
-      p.x += p.vx;
-      p.y += p.vy;
-
-      rctx.beginPath();
-      rctx.fillStyle = `rgba(0,255,136,${p.alpha})`;
-      rctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      rctx.fill();
-    }
-
-    if(frames < maxFrames){
-      requestAnimationFrame(step);
-    } else {
-      rctx.clearRect(0, 0, reformCanvas.width, reformCanvas.height);
-      setReforming(false);
-      if(callback) callback();
-    }
-  }
-
-  step();
-}
-
+/* ASK ORACLE */
 async function askOracle(query){
-  const endpoint = chooseEndpoint(query);
-  setState(currentModelMode === "deep" ? "deep" : "thinking");
-  responseEl.innerText = currentModelMode === "deep"
-    ? "Entering deeper analysis..."
-    : "Compressing intelligence...";
-  lastTranscript = query;
+  setThinking(true);
+  responseEl.innerText = "Thinking...";
 
   try{
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query })
+    const res = await fetch("http://127.0.0.1:5000/ask", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({query})
     });
 
     const data = await res.json();
-    const reply = data.response || "Oracle did not return a response.";
-    responseEl.innerText = reply;
 
-    runReformation(() => {
-      setState("idle");
-      speakOracle(reply);
-    });
+    setThinking(false);
 
-  } catch(err){
-    setState("alert");
-    responseEl.innerText = "Bridge failure. Restart local server.";
+    responseEl.innerText = data.response || "No response";
+    speak(data.response);
+
+  }catch(e){
+    setThinking(false);
+    responseEl.innerText = "Bridge failure";
   }
 }
 
-function pickNewTarget(){
-  if(currentState === "speaking"){
-    targetX = window.innerWidth / 2;
-    targetY = window.innerHeight / 2;
-    return;
-  }
-
-  if(currentState === "thinking" || currentState === "deep"){
-    targetX = window.innerWidth / 2 + (Math.random() * 90 - 45);
-    targetY = window.innerHeight / 2 + (Math.random() * 70 - 35);
-    return;
-  }
-
-  targetX = Math.random() * (window.innerWidth * 0.7) + window.innerWidth * 0.15;
-  targetY = Math.random() * (window.innerHeight * 0.42) + window.innerHeight * 0.20;
-}
-
-setInterval(pickNewTarget, 4200);
-
-function moveOracle(){
-  const speed = currentState === "speaking" ? 0.022 :
-                currentState === "thinking" || currentState === "deep" ? 0.02 :
-                0.008;
-
-  currentX += (targetX - currentX) * speed;
-  currentY += (targetY - currentY) * speed;
-
-  oracleWrap.style.left = currentX + "px";
-  oracleWrap.style.top = currentY + "px";
-
-  requestAnimationFrame(moveOracle);
-}
-moveOracle();
-
+/* SPEECH INPUT */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
+let recog;
 
 if(SpeechRecognition){
-  recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = true;
+  recog = new SpeechRecognition();
+  recog.lang = "en-US";
 
-  recognition.onresult = e => {
-    let interim = "";
-    let finalText = "";
-
-    for(let i = e.resultIndex; i < e.results.length; i++){
-      const chunk = e.results[i][0].transcript;
-      if(e.results[i].isFinal) finalText += chunk;
-      else interim += chunk;
-    }
-
-    if(interim) heardEl.innerText = interim;
-    if(finalText){
-      heardEl.innerText = finalText;
-      askOracle(finalText);
-    }
-  };
-
-  recognition.onerror = e => {
-    setState("alert");
-    responseEl.innerText = "Voice error: " + e.error;
+  recog.onresult = e=>{
+    const text = e.results[0][0].transcript;
+    heard.innerText = text;
+    askOracle(text);
   };
 }
 
 function startListening(){
-  if(!recognition) return;
-  setState("listening");
-  responseEl.innerText = "Listening...";
-  recognition.start();
-}
-
-function resetOracle(){
-  speechSynthesis.cancel();
-  setReforming(false);
-  currentModelMode = "balanced";
-  setState("idle");
-  responseEl.innerText = "Press LISTEN or hit SPACE.";
-  heardEl.innerText = lastTranscript || "Awaiting input.";
-}
-
-listenBtn.addEventListener("click", startListening);
-resetBtn.addEventListener("click", resetOracle);
-
-document.addEventListener("keydown", e => {
-  if(e.code === "Space"){
-    e.preventDefault();
-    startListening();
+  if(recog){
+    recog.start();
   }
-});
-
-window.speechSynthesis.onvoiceschanged = () => {};
-
-const matrix = document.getElementById("matrix");
-const mctx = matrix.getContext("2d");
-
-function resizeMatrix(){
-  matrix.width = window.innerWidth;
-  matrix.height = window.innerHeight;
 }
-resizeMatrix();
-
-const letters = "01アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const fontSize = 16;
-let columns = Math.floor(window.innerWidth / fontSize);
-let drops = Array(columns).fill(1);
-
-function drawMatrix(){
-  matrix.width = window.innerWidth;
-  matrix.height = window.innerHeight;
-  columns = Math.floor(window.innerWidth / fontSize);
-
-  if(drops.length !== columns){
-    drops = Array(columns).fill(1);
-  }
-
-  mctx.fillStyle = "rgba(0,0,0,0.06)";
-  mctx.fillRect(0,0,matrix.width,matrix.height);
-
-  const colorMap = {
-    idle: "0,170,255",
-    listening: "102,194,255",
-    thinking: "0,255,136",
-    speaking: "255,255,255",
-    alert: "255,51,95",
-    deep: "168,109,255",
-    executing: "0,255,136"
-  };
-
-  const rgb = colorMap[currentState] || "0,255,136";
-  const centerX = currentX;
-  const centerY = currentY;
-  const influence = (currentState === "thinking" || currentState === "deep") ? 240 : 170;
-
-  mctx.font = fontSize + "px monospace";
-
-  for(let i=0;i<drops.length;i++){
-    const x = i * fontSize;
-    let y = drops[i] * fontSize;
-    const char = letters[Math.floor(Math.random() * letters.length)];
-
-    const dx = centerX - x;
-    const dy = centerY - y;
-    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-
-    let alpha = 0.22;
-    let speed = 1;
-
-    if((currentState === "thinking" || currentState === "deep") && dist < influence){
-      const pull = 1 - dist / influence;
-      alpha += pull * 0.42;
-      speed = 0.55;
-      y += dy * 0.015 * pull;
-      const pullX = dx * 0.01 * pull;
-
-      mctx.fillStyle = `rgba(${rgb}, ${Math.max(0.08, Math.min(alpha, 1))})`;
-      mctx.fillText(char, x + pullX, y);
-    } else {
-      if(currentState === "speaking" && dist < 190){
-        alpha += 0.18;
-      }
-      mctx.fillStyle = `rgba(${rgb}, ${Math.max(0.06, Math.min(alpha, 1))})`;
-      mctx.fillText(char, x, y);
-    }
-
-    drops[i] += speed;
-    if(drops[i] * fontSize > matrix.height && Math.random() > 0.975){
-      drops[i] = 0;
-    }
-  }
-
-  requestAnimationFrame(drawMatrix);
-}
-drawMatrix();
-
-const orbCanvas = document.getElementById("orbParticles");
-const octx = orbCanvas.getContext("2d");
-
-function resizeOrbCanvas(){
-  orbCanvas.width = orbCanvas.offsetWidth || 320;
-  orbCanvas.height = orbCanvas.offsetHeight || 320;
-}
-resizeOrbCanvas();
-
-const orbParticles = Array.from({length: 70}, () => ({
-  angle: Math.random() * Math.PI * 2,
-  radius: 30 + Math.random() * 95,
-  speed: 0.005 + Math.random() * 0.015,
-  size: 1 + Math.random() * 2,
-  drift: 0.2 + Math.random() * 0.6
-}));
-
-function drawOrbParticles(){
-  resizeOrbCanvas();
-  octx.clearRect(0,0,orbCanvas.width,orbCanvas.height);
-
-  const cx = orbCanvas.width / 2;
-  const cy = orbCanvas.height / 2;
-
-  if(currentState === "thinking" || currentState === "deep"){
-    for(const p of orbParticles){
-      p.angle += p.speed;
-      p.radius -= p.drift * 0.45;
-      if(p.radius < 18){
-        p.radius = 95 + Math.random() * 45;
-        p.angle = Math.random() * Math.PI * 2;
-      }
-
-      const x = cx + Math.cos(p.angle) * p.radius;
-      const y = cy + Math.sin(p.angle) * p.radius;
-
-      octx.beginPath();
-      octx.fillStyle = currentState === "deep"
-        ? "rgba(168,109,255,0.8)"
-        : "rgba(0,255,136,0.75)";
-      octx.arc(x, y, p.size, 0, Math.PI * 2);
-      octx.fill();
-    }
-  }
-
-  requestAnimationFrame(drawOrbParticles);
-}
-drawOrbParticles();
-
-window.addEventListener("resize", () => {
-  resizeMatrix();
-  resizeOrbCanvas();
-  resizeReformCanvas();
-  targetX = window.innerWidth / 2;
-  targetY = window.innerHeight / 2;
-});
-
-setState("idle");
-responseEl.innerText = "Press LISTEN or hit SPACE.";
-heardEl.innerText = "Awaiting input.";
 </script>
+
 </body>
 </html>
