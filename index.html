@@ -38,11 +38,11 @@ canvas{
   position:absolute;
   top:50%;
   left:50%;
-  width:480px;
-  height:680px;
+  width:min(34vw, 420px);
+  height:min(60vh, 620px);
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle, rgba(var(--oracle-rgb),0.20) 0%, transparent 72%);
-  filter:blur(34px);
+  background:radial-gradient(circle, rgba(var(--oracle-rgb),0.18) 0%, transparent 72%);
+  filter:blur(30px);
   z-index:2;
   pointer-events:none;
   transition: opacity 0.35s ease, transform 0.35s ease;
@@ -50,9 +50,9 @@ canvas{
 
 #oracleWrap{
   position:absolute;
-  width:68vw;
-  max-width:1080px;
-  min-width:420px;
+  width:min(34vw, 52vh);
+  max-width:520px;
+  min-width:240px;
   transform:translate(-50%,-50%);
   pointer-events:none;
   z-index:4;
@@ -60,11 +60,13 @@ canvas{
 
 #oracle{
   width:100%;
+  height:auto;
   display:block;
+  object-fit:contain;
   mix-blend-mode:screen;
   filter:
-    drop-shadow(0 0 calc(18px * var(--pulse)) rgba(var(--oracle-rgb),0.45))
-    drop-shadow(0 0 calc(46px * var(--pulse)) rgba(var(--oracle-rgb),0.22));
+    drop-shadow(0 0 calc(14px * var(--pulse)) rgba(var(--oracle-rgb),0.42))
+    drop-shadow(0 0 calc(34px * var(--pulse)) rgba(var(--oracle-rgb),0.20));
   transition: opacity 0.45s ease, filter 0.1s linear, transform 0.45s ease;
   animation: oracleFloat 7s ease-in-out infinite;
 }
@@ -91,8 +93,8 @@ canvas{
   position:absolute;
   top:50%;
   left:50%;
-  width:220px;
-  height:220px;
+  width:170px;
+  height:170px;
   transform:translate(-50%,-50%) scale(0.2);
   opacity:0;
   pointer-events:none;
@@ -112,19 +114,19 @@ canvas{
       rgba(var(--oracle-rgb),0) 100%);
   filter: blur(6px);
   box-shadow:
-    0 0 28px rgba(var(--oracle-rgb),0.55),
-    0 0 76px rgba(var(--oracle-rgb),0.22),
-    inset 0 0 28px rgba(255,255,255,0.18);
+    0 0 22px rgba(var(--oracle-rgb),0.55),
+    0 0 60px rgba(var(--oracle-rgb),0.22),
+    inset 0 0 22px rgba(255,255,255,0.18);
 }
 
 #orbPulse{
   position:absolute;
-  inset:-18px;
+  inset:-14px;
   border-radius:50%;
   border:1px solid rgba(var(--oracle-rgb),0.28);
   box-shadow:
-    0 0 18px rgba(var(--oracle-rgb),0.25),
-    inset 0 0 18px rgba(var(--oracle-rgb),0.18);
+    0 0 14px rgba(var(--oracle-rgb),0.25),
+    inset 0 0 14px rgba(var(--oracle-rgb),0.18);
 }
 
 #orbRingA,
@@ -133,29 +135,29 @@ canvas{
   position:absolute;
   border-radius:50%;
   border:1px solid rgba(var(--oracle-rgb),0.32);
-  box-shadow: 0 0 16px rgba(var(--oracle-rgb),0.16);
+  box-shadow: 0 0 14px rgba(var(--oracle-rgb),0.16);
 }
 
 #orbRingA{
-  inset:-28px;
+  inset:-22px;
   border-style:solid;
 }
 
 #orbRingB{
-  inset:-48px;
+  inset:-38px;
   border-style:dashed;
   opacity:0.72;
 }
 
 #orbRingC{
-  inset:22px;
+  inset:18px;
   border-style:solid;
   opacity:0.65;
 }
 
 #orbHalo{
   position:absolute;
-  inset:-70px;
+  inset:-54px;
   border-radius:50%;
   background:radial-gradient(circle, rgba(var(--oracle-rgb),0.18) 0%, rgba(var(--oracle-rgb),0.06) 30%, transparent 70%);
   filter: blur(18px);
@@ -163,7 +165,7 @@ canvas{
 
 #orbParticles{
   position:absolute;
-  inset:-80px;
+  inset:-70px;
   border-radius:50%;
 }
 
@@ -388,21 +390,21 @@ body.deep{ --oracle-rgb: 168,109,255; }
 
 @keyframes oracleFloat{
   0%,100%{ transform:translateY(0px); }
-  50%{ transform:translateY(-18px); }
+  50%{ transform:translateY(-14px); }
 }
 
 @keyframes oraclePulse{
   0%,100%{
     filter:
       brightness(1)
-      drop-shadow(0 0 calc(18px * var(--pulse)) rgba(var(--oracle-rgb),0.45))
-      drop-shadow(0 0 calc(46px * var(--pulse)) rgba(var(--oracle-rgb),0.22));
+      drop-shadow(0 0 calc(14px * var(--pulse)) rgba(var(--oracle-rgb),0.42))
+      drop-shadow(0 0 calc(34px * var(--pulse)) rgba(var(--oracle-rgb),0.20));
   }
   50%{
     filter:
       brightness(1.28)
-      drop-shadow(0 0 calc(24px * var(--pulse)) rgba(var(--oracle-rgb),0.58))
-      drop-shadow(0 0 calc(70px * var(--pulse)) rgba(var(--oracle-rgb),0.30));
+      drop-shadow(0 0 calc(20px * var(--pulse)) rgba(var(--oracle-rgb),0.58))
+      drop-shadow(0 0 calc(54px * var(--pulse)) rgba(var(--oracle-rgb),0.30));
   }
 }
 
@@ -433,7 +435,7 @@ body.deep{ --oracle-rgb: 168,109,255; }
 
 @keyframes glowFloat{
   0%,100%{ transform:translate(-50%,-50%) translateY(0px); }
-  50%{ transform:translate(-50%,-50%) translateY(-10px); }
+  50%{ transform:translate(-50%,-50%) translateY(-8px); }
 }
 
 @keyframes glowPulse{
@@ -443,7 +445,7 @@ body.deep{ --oracle-rgb: 168,109,255; }
 
 @keyframes deepDrift{
   0%,100%{ transform:translate(-50%,-50%) translateX(0px) translateY(0px); }
-  50%{ transform:translate(-50%,-50%) translateX(26px) translateY(-8px); }
+  50%{ transform:translate(-50%,-50%) translateX(20px) translateY(-6px); }
 }
 
 @keyframes alertGlitch{
@@ -481,7 +483,7 @@ body.deep{ --oracle-rgb: 168,109,255; }
 <div id="topbar">
   <div>
     <div id="brandTitle">ORACLE // ACTIVE</div>
-    <div id="brandSub">Orb compression + particle reformation</div>
+    <div id="brandSub">Particle reformation active</div>
   </div>
   <div>
     <div id="clock">--:--:--</div>
@@ -508,7 +510,7 @@ body.deep{ --oracle-rgb: 168,109,255; }
     </div>
 
     <div id="hint">
-      thinking compresses oracle into energy · reformation rebuilds from particles after insight returns
+      if you see bridge failure, restart backend server in cmd first
     </div>
   </div>
 </div>
@@ -534,7 +536,6 @@ let targetY = window.innerHeight / 2;
 let currentX = targetX;
 let currentY = targetY;
 let lastTranscript = "";
-let orbHum = null;
 let reforming = false;
 let reformParticles = [];
 
@@ -552,11 +553,7 @@ function setState(state){
     deep: "Mode: deep focus",
     executing: "Mode: aligned"
   };
-
   modeText.textContent = modes[state] || "Mode: calm";
-
-  if(state === "thinking") startOrbHum();
-  else stopOrbHum();
 }
 
 function setReforming(isOn){
@@ -575,51 +572,6 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-function startOrbHum(){
-  stopOrbHum();
-  try{
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if(!AudioContextClass) return;
-
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.value = 88;
-    lfo.type = "sine";
-    lfo.frequency.value = 1.8;
-    lfoGain.gain.value = 8;
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
-    gain.gain.value = 0.015;
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    lfo.start();
-
-    orbHum = { ctx, osc, gain, lfo };
-  } catch(err){
-    orbHum = null;
-  }
-}
-
-function stopOrbHum(){
-  if(!orbHum) return;
-  try{
-    orbHum.gain.gain.value = 0.0001;
-    orbHum.osc.stop();
-    orbHum.lfo.stop();
-    orbHum.ctx.close();
-  } catch(err){}
-  orbHum = null;
-}
-
 function pickNewTarget(){
   if(currentState === "speaking"){
     targetX = window.innerWidth / 2;
@@ -628,13 +580,13 @@ function pickNewTarget(){
   }
 
   if(currentState === "thinking"){
-    targetX = window.innerWidth / 2 + (Math.random() * 120 - 60);
-    targetY = window.innerHeight / 2 + (Math.random() * 80 - 40);
+    targetX = window.innerWidth / 2 + (Math.random() * 90 - 45);
+    targetY = window.innerHeight / 2 + (Math.random() * 70 - 35);
     return;
   }
 
   targetX = Math.random() * (window.innerWidth * 0.7) + window.innerWidth * 0.15;
-  targetY = Math.random() * (window.innerHeight * 0.45) + window.innerHeight * 0.18;
+  targetY = Math.random() * (window.innerHeight * 0.42) + window.innerHeight * 0.20;
 }
 
 setInterval(pickNewTarget, 4200);
@@ -693,18 +645,23 @@ function animateVoice(){
   loop();
 }
 
+function resizeReformCanvas(){
+  reformCanvas.width = oracle.clientWidth || 520;
+  reformCanvas.height = oracle.clientHeight || 520;
+}
+
 function initReformation(){
   resizeReformCanvas();
   reformParticles = [];
   const w = reformCanvas.width;
   const h = reformCanvas.height;
 
-  for(let i = 0; i < 700; i++){
+  for(let i = 0; i < 520; i++){
     const tx = Math.random() * w;
     const ty = Math.random() * h;
 
     const angle = Math.random() * Math.PI * 2;
-    const dist = 180 + Math.random() * 260;
+    const dist = 120 + Math.random() * 180;
 
     const sx = w / 2 + Math.cos(angle) * dist;
     const sy = h / 2 + Math.sin(angle) * dist;
@@ -716,15 +673,10 @@ function initReformation(){
       ty,
       vx: 0,
       vy: 0,
-      size: 1 + Math.random() * 2.2,
+      size: 1 + Math.random() * 2.0,
       alpha: 0.35 + Math.random() * 0.65
     });
   }
-}
-
-function resizeReformCanvas(){
-  reformCanvas.width = oracle.clientWidth || 900;
-  reformCanvas.height = oracle.clientHeight || 900;
 }
 
 function runReformation(callback){
@@ -732,7 +684,7 @@ function runReformation(callback){
   initReformation();
 
   let frames = 0;
-  const maxFrames = 90;
+  const maxFrames = 80;
 
   function step(){
     frames++;
@@ -742,12 +694,10 @@ function runReformation(callback){
       const dx = p.tx - p.x;
       const dy = p.ty - p.y;
 
-      p.vx += dx * 0.02;
-      p.vy += dy * 0.02;
-
-      p.vx *= 0.82;
-      p.vy *= 0.82;
-
+      p.vx += dx * 0.022;
+      p.vy += dy * 0.022;
+      p.vx *= 0.83;
+      p.vy *= 0.83;
       p.x += p.vx;
       p.y += p.vy;
 
@@ -792,7 +742,7 @@ async function askOracle(query){
 
   } catch(err){
     setState("alert");
-    responseEl.innerText = "Bridge failure.";
+    responseEl.innerText = "Bridge failure. Restart local server.";
   }
 }
 
@@ -837,7 +787,6 @@ function startListening(){
 
 function resetOracle(){
   speechSynthesis.cancel();
-  stopOrbHum();
   setReforming(false);
   setState("idle");
   responseEl.innerText = "Press LISTEN or hit SPACE.";
@@ -893,7 +842,7 @@ function drawMatrix(){
   const rgb = colorMap[currentState] || "0,255,136";
   const centerX = currentX;
   const centerY = currentY;
-  const influence = currentState === "thinking" ? 280 : 180;
+  const influence = currentState === "thinking" ? 240 : 170;
 
   mctx.font = fontSize + "px monospace";
 
@@ -913,14 +862,13 @@ function drawMatrix(){
       const pull = 1 - dist / influence;
       alpha += pull * 0.42;
       speed = 0.55;
-
       y += dy * 0.015 * pull;
       const pullX = dx * 0.01 * pull;
 
       mctx.fillStyle = `rgba(${rgb}, ${Math.max(0.08, Math.min(alpha, 1))})`;
       mctx.fillText(char, x + pullX, y);
     } else {
-      if(currentState === "speaking" && dist < 220){
+      if(currentState === "speaking" && dist < 190){
         alpha += 0.18;
       }
       mctx.fillStyle = `rgba(${rgb}, ${Math.max(0.06, Math.min(alpha, 1))})`;
@@ -941,14 +889,14 @@ const orbCanvas = document.getElementById("orbParticles");
 const octx = orbCanvas.getContext("2d");
 
 function resizeOrbCanvas(){
-  orbCanvas.width = orbCanvas.offsetWidth || 380;
-  orbCanvas.height = orbCanvas.offsetHeight || 380;
+  orbCanvas.width = orbCanvas.offsetWidth || 320;
+  orbCanvas.height = orbCanvas.offsetHeight || 320;
 }
 resizeOrbCanvas();
 
-const orbParticles = Array.from({length: 85}, () => ({
+const orbParticles = Array.from({length: 70}, () => ({
   angle: Math.random() * Math.PI * 2,
-  radius: 40 + Math.random() * 120,
+  radius: 30 + Math.random() * 95,
   speed: 0.005 + Math.random() * 0.015,
   size: 1 + Math.random() * 2,
   drift: 0.2 + Math.random() * 0.6
@@ -966,7 +914,7 @@ function drawOrbParticles(){
       p.angle += p.speed;
       p.radius -= p.drift * 0.45;
       if(p.radius < 18){
-        p.radius = 120 + Math.random() * 55;
+        p.radius = 95 + Math.random() * 45;
         p.angle = Math.random() * Math.PI * 2;
       }
 
