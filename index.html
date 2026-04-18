@@ -483,7 +483,7 @@ body.deep{ --oracle-rgb: 168,109,255; }
 <div id="topbar">
   <div>
     <div id="brandTitle">ORACLE // ACTIVE</div>
-    <div id="brandSub">Particle reformation active</div>
+    <div id="brandSub">Tiered intelligence active</div>
   </div>
   <div>
     <div id="clock">--:--:--</div>
@@ -510,7 +510,7 @@ body.deep{ --oracle-rgb: 168,109,255; }
     </div>
 
     <div id="hint">
-      if you see bridge failure, restart backend server in cmd first
+      short = fast · normal = balanced · analysis language = deep
     </div>
   </div>
 </div>
@@ -538,6 +538,7 @@ let currentY = targetY;
 let lastTranscript = "";
 let reforming = false;
 let reformParticles = [];
+let currentModelMode = "balanced";
 
 function setState(state){
   currentState = state;
@@ -545,15 +546,15 @@ function setState(state){
   statusPill.textContent = state.toUpperCase();
 
   const modes = {
-    idle: "Mode: calm",
-    listening: "Mode: attentive",
-    thinking: "Mode: compression",
-    speaking: "Mode: voice",
-    alert: "Mode: warning",
-    deep: "Mode: deep focus",
-    executing: "Mode: aligned"
+    idle: `Mode: calm · ${currentModelMode}`,
+    listening: `Mode: attentive · ${currentModelMode}`,
+    thinking: `Mode: compression · ${currentModelMode}`,
+    speaking: `Mode: voice · ${currentModelMode}`,
+    alert: `Mode: warning · ${currentModelMode}`,
+    deep: `Mode: deep focus · ${currentModelMode}`,
+    executing: `Mode: aligned · ${currentModelMode}`
   };
-  modeText.textContent = modes[state] || "Mode: calm";
+  modeText.textContent = modes[state] || `Mode: calm · ${currentModelMode}`;
 }
 
 function setReforming(isOn){
@@ -572,52 +573,66 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-function pickNewTarget(){
-  if(currentState === "speaking"){
-    targetX = window.innerWidth / 2;
-    targetY = window.innerHeight / 2;
-    return;
+function chooseEndpoint(query){
+  const q = query.toLowerCase().trim();
+
+  const deepTriggers = [
+    "analyze", "analysis", "deep", "strategy", "strategic", "insight",
+    "interpret", "meaning", "pattern", "break this down", "think deeply",
+    "what am i missing", "root cause", "why am i", "long term", "bigger picture"
+  ];
+
+  if (deepTriggers.some(t => q.includes(t)) || query.length > 140) {
+    currentModelMode = "deep";
+    return "http://127.0.0.1:5000/deepask";
   }
 
-  if(currentState === "thinking"){
-    targetX = window.innerWidth / 2 + (Math.random() * 90 - 45);
-    targetY = window.innerHeight / 2 + (Math.random() * 70 - 35);
-    return;
+  if (query.length < 45) {
+    currentModelMode = "fast";
+    return "http://127.0.0.1:5000/fast";
   }
 
-  targetX = Math.random() * (window.innerWidth * 0.7) + window.innerWidth * 0.15;
-  targetY = Math.random() * (window.innerHeight * 0.42) + window.innerHeight * 0.20;
+  currentModelMode = "balanced";
+  return "http://127.0.0.1:5000/ask";
 }
 
-setInterval(pickNewTarget, 4200);
+function pickPreferredVoice(){
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
 
-function moveOracle(){
-  const speed = currentState === "speaking" ? 0.022 :
-                currentState === "thinking" ? 0.02 :
-                0.008;
+  const preferredNames = [
+    "Microsoft Aria Online",
+    "Microsoft Jenny Online",
+    "Microsoft Zira",
+    "Aria",
+    "Jenny",
+    "Zira",
+    "Samantha",
+    "Victoria"
+  ];
 
-  currentX += (targetX - currentX) * speed;
-  currentY += (targetY - currentY) * speed;
+  for (const name of preferredNames) {
+    const found = voices.find(v => v.name && v.name.includes(name));
+    if (found) return found;
+  }
 
-  oracleWrap.style.left = currentX + "px";
-  oracleWrap.style.top = currentY + "px";
+  const femaleish = voices.find(v =>
+    /aria|zira|jenny|samantha|victoria|susan|female|woman/i.test(v.name)
+  );
+  if (femaleish) return femaleish;
 
-  requestAnimationFrame(moveOracle);
+  const english = voices.find(v => /en/i.test(v.lang || ""));
+  return english || voices[0];
 }
-moveOracle();
 
 function speakOracle(text){
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.84;
-  u.pitch = 0.82;
+  u.rate = 0.82;
+  u.pitch = 0.84;
   u.volume = 1;
 
-  const voices = speechSynthesis.getVoices();
-  const preferred = voices.find(v =>
-    /zira|aria|susan|jenny|female|woman/i.test(v.name)
-  ) || voices.find(v => /english/i.test(v.lang || "")) || null;
-
-  if(preferred) u.voice = preferred;
+  const preferred = pickPreferredVoice();
+  if (preferred) u.voice = preferred;
 
   speaking = true;
   setState("speaking");
@@ -684,7 +699,7 @@ function runReformation(callback){
   initReformation();
 
   let frames = 0;
-  const maxFrames = 80;
+  const maxFrames = currentModelMode === "deep" ? 105 : 80;
 
   function step(){
     frames++;
@@ -720,12 +735,15 @@ function runReformation(callback){
 }
 
 async function askOracle(query){
-  setState("thinking");
-  responseEl.innerText = "Compressing intelligence...";
+  const endpoint = chooseEndpoint(query);
+  setState(currentModelMode === "deep" ? "deep" : "thinking");
+  responseEl.innerText = currentModelMode === "deep"
+    ? "Entering deeper analysis..."
+    : "Compressing intelligence...";
   lastTranscript = query;
 
   try{
-    const res = await fetch("http://127.0.0.1:5000/ask", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query })
@@ -745,6 +763,40 @@ async function askOracle(query){
     responseEl.innerText = "Bridge failure. Restart local server.";
   }
 }
+
+function pickNewTarget(){
+  if(currentState === "speaking"){
+    targetX = window.innerWidth / 2;
+    targetY = window.innerHeight / 2;
+    return;
+  }
+
+  if(currentState === "thinking" || currentState === "deep"){
+    targetX = window.innerWidth / 2 + (Math.random() * 90 - 45);
+    targetY = window.innerHeight / 2 + (Math.random() * 70 - 35);
+    return;
+  }
+
+  targetX = Math.random() * (window.innerWidth * 0.7) + window.innerWidth * 0.15;
+  targetY = Math.random() * (window.innerHeight * 0.42) + window.innerHeight * 0.20;
+}
+
+setInterval(pickNewTarget, 4200);
+
+function moveOracle(){
+  const speed = currentState === "speaking" ? 0.022 :
+                currentState === "thinking" || currentState === "deep" ? 0.02 :
+                0.008;
+
+  currentX += (targetX - currentX) * speed;
+  currentY += (targetY - currentY) * speed;
+
+  oracleWrap.style.left = currentX + "px";
+  oracleWrap.style.top = currentY + "px";
+
+  requestAnimationFrame(moveOracle);
+}
+moveOracle();
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
@@ -788,6 +840,7 @@ function startListening(){
 function resetOracle(){
   speechSynthesis.cancel();
   setReforming(false);
+  currentModelMode = "balanced";
   setState("idle");
   responseEl.innerText = "Press LISTEN or hit SPACE.";
   heardEl.innerText = lastTranscript || "Awaiting input.";
@@ -802,6 +855,8 @@ document.addEventListener("keydown", e => {
     startListening();
   }
 });
+
+window.speechSynthesis.onvoiceschanged = () => {};
 
 const matrix = document.getElementById("matrix");
 const mctx = matrix.getContext("2d");
@@ -842,7 +897,7 @@ function drawMatrix(){
   const rgb = colorMap[currentState] || "0,255,136";
   const centerX = currentX;
   const centerY = currentY;
-  const influence = currentState === "thinking" ? 240 : 170;
+  const influence = (currentState === "thinking" || currentState === "deep") ? 240 : 170;
 
   mctx.font = fontSize + "px monospace";
 
@@ -858,7 +913,7 @@ function drawMatrix(){
     let alpha = 0.22;
     let speed = 1;
 
-    if(currentState === "thinking" && dist < influence){
+    if((currentState === "thinking" || currentState === "deep") && dist < influence){
       const pull = 1 - dist / influence;
       alpha += pull * 0.42;
       speed = 0.55;
@@ -909,7 +964,7 @@ function drawOrbParticles(){
   const cx = orbCanvas.width / 2;
   const cy = orbCanvas.height / 2;
 
-  if(currentState === "thinking"){
+  if(currentState === "thinking" || currentState === "deep"){
     for(const p of orbParticles){
       p.angle += p.speed;
       p.radius -= p.drift * 0.45;
@@ -922,7 +977,9 @@ function drawOrbParticles(){
       const y = cy + Math.sin(p.angle) * p.radius;
 
       octx.beginPath();
-      octx.fillStyle = "rgba(0,255,136,0.75)";
+      octx.fillStyle = currentState === "deep"
+        ? "rgba(168,109,255,0.8)"
+        : "rgba(0,255,136,0.75)";
       octx.arc(x, y, p.size, 0, Math.PI * 2);
       octx.fill();
     }
